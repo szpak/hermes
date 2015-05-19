@@ -12,6 +12,21 @@ import pl.allegro.tech.hermes.common.config.ConfigFactory;
 import pl.allegro.tech.hermes.common.di.factories.BoonObjectMapperFactory;
 import pl.allegro.tech.hermes.common.di.factories.CuratorClientFactory;
 import pl.allegro.tech.hermes.common.di.factories.DistributedEphemeralCounterFactory;
+import pl.allegro.tech.hermes.common.di.factories.GraphiteQueriesFactory;
+import pl.allegro.tech.hermes.common.di.factories.GraphiteWebTargetFactory;
+import pl.allegro.tech.hermes.common.di.factories.GroupRepositoryFactory;
+import pl.allegro.tech.hermes.common.di.factories.HermesCuratorClientFactory;
+import pl.allegro.tech.hermes.common.di.factories.KafkaCuratorClientFactory;
+import pl.allegro.tech.hermes.common.di.factories.MetricRegistryFactory;
+import pl.allegro.tech.hermes.common.di.factories.ObjectMapperFactory;
+import pl.allegro.tech.hermes.common.di.factories.PathsCompilerFactory;
+import pl.allegro.tech.hermes.common.di.factories.SharedCounterFactory;
+import pl.allegro.tech.hermes.common.di.factories.SimpleConsumerPoolFactory;
+import pl.allegro.tech.hermes.common.di.factories.SubscriptionOffsetChangeIndicatorFactory;
+import pl.allegro.tech.hermes.common.di.factories.SubscriptionRepositoryFactory;
+import pl.allegro.tech.hermes.common.di.factories.TopicRepositoryFactory;
+import pl.allegro.tech.hermes.common.di.factories.UndeliveredMessageLogFactory;
+import pl.allegro.tech.hermes.common.di.factories.ZookeeperPathsFactory;
 import pl.allegro.tech.hermes.common.di.factories.GraphiteWebTargetFactory;
 import pl.allegro.tech.hermes.common.di.factories.GroupRepositoryFactory;
 import pl.allegro.tech.hermes.common.di.factories.HermesCuratorClientFactory;
@@ -29,9 +44,14 @@ import pl.allegro.tech.hermes.common.kafka.SimpleConsumerPool;
 import pl.allegro.tech.hermes.common.message.tracker.MongoDbFactory;
 import pl.allegro.tech.hermes.common.message.undelivered.UndeliveredMessageLog;
 import pl.allegro.tech.hermes.common.metric.HermesMetrics;
+import pl.allegro.tech.hermes.common.metric.PathsCompiler;
 import pl.allegro.tech.hermes.common.metric.counter.CounterStorage;
 import pl.allegro.tech.hermes.common.metric.counter.zookeeper.ZookeeperCounterStorage;
+import pl.allegro.tech.hermes.common.metric.rate.RateStorage;
+import pl.allegro.tech.hermes.common.metric.rate.graphite.GraphiteQueries;
 import pl.allegro.tech.hermes.common.time.Clock;
+import pl.allegro.tech.hermes.common.util.HostnameResolver;
+import pl.allegro.tech.hermes.common.util.SimpleHostnameResolver;
 import pl.allegro.tech.hermes.common.time.SystemClock;
 import pl.allegro.tech.hermes.domain.group.GroupRepository;
 import pl.allegro.tech.hermes.domain.subscription.SubscriptionRepository;
@@ -77,6 +97,8 @@ public class CommonBinder extends AbstractBinder {
         bind(ZookeeperBrokerStorage.class).to(BrokerStorage.class).in(Singleton.class);
         bindFactory(SimpleConsumerPoolFactory.class).in(Singleton.class).to(SimpleConsumerPool.class);
         bindFactory(SubscriptionOffsetChangeIndicatorFactory.class).in(Singleton.class).to(SubscriptionOffsetChangeIndicator.class);
+        bind(SimpleHostnameResolver.class).in(Singleton.class).to(HostnameResolver.class);
+        bindFactory(PathsCompilerFactory.class).in(Singleton.class).to(PathsCompiler.class);
+        bindFactory(GraphiteQueriesFactory.class).in(Singleton.class).to(GraphiteQueries.class);
     }
-
 }

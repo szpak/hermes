@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import pl.allegro.tech.hermes.api.TopicName;
 import pl.allegro.tech.hermes.common.config.ConfigFactory;
 import pl.allegro.tech.hermes.common.config.Configs;
-import pl.allegro.tech.hermes.common.metric.Metrics;
-import pl.allegro.tech.hermes.common.metric.counter.CounterMatcher;
+import pl.allegro.tech.hermes.common.metric.HermesMetrics;
 import pl.allegro.tech.hermes.common.metric.counter.CounterStorage;
+import pl.allegro.tech.hermes.common.util.HostnameResolver;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -27,17 +27,17 @@ import static pl.allegro.tech.hermes.api.TopicName.fromQualifiedName;
 public class ZookeeperCounterReporter extends ScheduledReporter {
 
     private static final String ZOOKEEPER_REPORTER_NAME = "zookeeper-reporter";
-
     private static final TimeUnit RATE_UNIT = TimeUnit.SECONDS;
-
     private static final TimeUnit DURATION_UNIT = TimeUnit.MILLISECONDS;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperCounterReporter.class);
 
     private final CounterStorage counterStorage;
-    private final String graphitePrefix;
+    private final HostnameResolver hostnameResolver;
 
-    public ZookeeperCounterReporter(MetricRegistry registry, CounterStorage counterStorage, ConfigFactory config) {
+    public ZookeeperCounterReporter(MetricRegistry registry,
+                                    CounterStorage counterStorage,
+                                    HostnameResolver hostnameResolver,
+                                    ConfigFactory config) {
         super(
             registry,
             ZOOKEEPER_REPORTER_NAME,
@@ -46,7 +46,7 @@ public class ZookeeperCounterReporter extends ScheduledReporter {
             DURATION_UNIT
         );
         this.counterStorage = counterStorage;
-        this.graphitePrefix = config.getStringProperty(Configs.GRAPHITE_PREFIX);
+        this.hostnameResolver = hostnameResolver;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class ZookeeperCounterReporter extends ScheduledReporter {
             return;
         }
 
-        CounterMatcher matcher = new CounterMatcher(graphitePrefix, counterName);
+        CounterMatcher matcher = new CounterMatcher(counterName, hostnameResolver.resolve());
         if (!matcher.matches()) {
             return;
         }
@@ -104,14 +104,14 @@ public class ZookeeperCounterReporter extends ScheduledReporter {
     }
 
     private static String escapeMetricsReplacementChar(String value) {
-        return value.replaceAll(Metrics.REPLACEMENT_CHAR, "\\.");
+        return value.replaceAll(HermesMetrics.REPLACEMENT_CHAR, "\\.");
     }
 
     private static final class CountersExceptOffsetsFilter implements MetricFilter {
         private final String offsetPrefix;
 
         private CountersExceptOffsetsFilter(String graphitePrefix) {
-            offsetPrefix = graphitePrefix + "." + Metrics.OFFSET_PREFIX;
+            offsetPrefix = graphitePrefix + "." + "consumer.offset";
         }
 
         @Override

@@ -1,5 +1,6 @@
 package pl.allegro.tech.hermes.frontend.message.tracker;
 
+import com.codahale.metrics.Gauge;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
@@ -7,7 +8,9 @@ import pl.allegro.tech.hermes.api.PublishedMessageTraceStatus;
 import pl.allegro.tech.hermes.common.config.ConfigFactory;
 import pl.allegro.tech.hermes.common.config.Configs;
 import pl.allegro.tech.hermes.common.message.tracker.LogSchemaAware;
+import pl.allegro.tech.hermes.common.metric.Gauges;
 import pl.allegro.tech.hermes.common.metric.HermesMetrics;
+import pl.allegro.tech.hermes.common.metric.Timers;
 import pl.allegro.tech.hermes.common.time.Clock;
 
 import javax.inject.Inject;
@@ -15,14 +18,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static pl.allegro.tech.hermes.api.PublishedMessageTraceStatus.ERROR;
-import static pl.allegro.tech.hermes.api.PublishedMessageTraceStatus.SUCCESS;
 import static pl.allegro.tech.hermes.api.PublishedMessageTraceStatus.INFLIGHT;
-import static pl.allegro.tech.hermes.common.message.tracker.QueueMetrics.registerCurrentSizeGauge;
-import static pl.allegro.tech.hermes.common.message.tracker.QueueMetrics.registerRemainingCapacityGauge;
+import static pl.allegro.tech.hermes.api.PublishedMessageTraceStatus.SUCCESS;
 import static pl.allegro.tech.hermes.common.message.tracker.mongo.MongoQueueCommitter.scheduleCommitAtFixedRate;
-import static pl.allegro.tech.hermes.common.metric.Metrics.Gauge.PRODUCER_TRACKER_QUEUE_SIZE;
-import static pl.allegro.tech.hermes.common.metric.Metrics.Gauge.PRODUCER_TRACKER_REMAINING_CAPACITY;
-import static pl.allegro.tech.hermes.common.metric.Metrics.Timer.PRODUCER_TRACKER_COMMIT_LATENCY;
 
 public class MongoLogRepository implements LogRepository, LogSchemaAware {
 
@@ -43,10 +41,23 @@ public class MongoLogRepository implements LogRepository, LogSchemaAware {
         this.clock = clock;
         this.queue = new LinkedBlockingQueue<>(queueSize);
         this.clusterName = clusterName;
-        registerCurrentSizeGauge(queue, PRODUCER_TRACKER_QUEUE_SIZE, metrics);
-        registerRemainingCapacityGauge(queue, PRODUCER_TRACKER_REMAINING_CAPACITY, metrics);
+
+        metrics.registerGauge(Gauges.PRODUCER_TRACKER_QUEUE_SIZE, new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return queue.size();
+            }
+        });
+
+        metrics.registerGauge(Gauges.PRODUCER_TRACKER_REMAINING_CAPACITY, new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return queue.remainingCapacity();
+            }
+        });
+
         scheduleCommitAtFixedRate(queue, COLLECTION_PUBLISHED_NAME, database,
-                metrics.timer(PRODUCER_TRACKER_COMMIT_LATENCY), commitInterval);
+                metrics.timer(Timers.PRODUCER_TRACKER_COMMIT_LATENCY), commitInterval);
     }
 
     @Override

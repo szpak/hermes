@@ -5,7 +5,8 @@ import org.slf4j.LoggerFactory;
 import pl.allegro.tech.hermes.api.TopicName;
 import pl.allegro.tech.hermes.common.config.ConfigFactory;
 import pl.allegro.tech.hermes.common.config.Configs;
-import pl.allegro.tech.hermes.common.metric.Metrics;
+import pl.allegro.tech.hermes.common.metric.Counters;
+import pl.allegro.tech.hermes.common.metric.PathsCompiler;
 import pl.allegro.tech.hermes.common.metric.counter.CounterStorage;
 import pl.allegro.tech.hermes.common.metric.counter.MetricsDeltaCalculator;
 import pl.allegro.tech.hermes.domain.subscription.SubscriptionNotExistsException;
@@ -27,26 +28,28 @@ public class ZookeeperCounterStorage implements CounterStorage {
     private final DistributedEphemeralCounter distributedCounter;
     private final SubscriptionRepository subscriptionRepository;
     private final ZookeeperPaths zookeeperPaths;
+    private final PathsCompiler pathCompiler;
 
     @Inject
     public ZookeeperCounterStorage(SharedCounter sharedCounter,
             DistributedEphemeralCounter distributedCounter,
             ConfigFactory configFactory,
-            SubscriptionRepository subscriptionRepository) {
+            SubscriptionRepository subscriptionRepository,
+            PathsCompiler pathCompiler) {
         this.sharedCounter = sharedCounter;
         this.distributedCounter = distributedCounter;
         this.subscriptionRepository = subscriptionRepository;
-
         this.zookeeperPaths = new ZookeeperPaths(configFactory.getStringProperty(Configs.ZOOKEEPER_ROOT));
+        this.pathCompiler = pathCompiler;
     }
 
     @Override
-    public void setTopicCounter(TopicName topicName, Metrics.Counter counter, long count) {
+    public void setTopicCounter(TopicName topicName, String counter, long count) {
         incrementSharedCounter(topicMetricPath(topicName, counter), count);
     }
 
     @Override
-    public void setSubscriptionCounter(TopicName topicName, String subscriptionName, Metrics.Counter counter, long count) {
+    public void setSubscriptionCounter(TopicName topicName, String subscriptionName, String counter, long count) {
         try {
             subscriptionRepository.ensureSubscriptionExists(topicName, subscriptionName);
             incrementSharedCounter(subscriptionMetricPath(topicName, subscriptionName, counter), count);
@@ -58,18 +61,18 @@ public class ZookeeperCounterStorage implements CounterStorage {
     @Override
     public void setInflightCounter(String hostname, TopicName topicName, String subscriptionName, long count) {
         distributedCounter.setCounterValue(
-                zookeeperPaths.inflightPath(hostname, topicName, subscriptionName, Metrics.Counter.CONSUMER_INFLIGHT.normalizedName()),
+                zookeeperPaths.inflightPath(hostname, topicName, subscriptionName, normalizedName(pathCompiler.compile(Counters.CONSUMER_INFLIGHT))),
                 count
         );
     }
 
     @Override
-    public long getTopicCounter(TopicName topicName, Metrics.Counter counter) {
+    public long getTopicCounter(TopicName topicName, String counter) {
         return sharedCounter.getValue(topicMetricPath(topicName, counter));
     }
 
     @Override
-    public long getSubscriptionCounter(TopicName topicName, String subscriptionName, Metrics.Counter counter) {
+    public long getSubscriptionCounter(TopicName topicName, String subscriptionName, String counter) {
         return sharedCounter.getValue(subscriptionMetricPath(topicName, subscriptionName, counter));
     }
 
@@ -78,7 +81,7 @@ public class ZookeeperCounterStorage implements CounterStorage {
         return distributedCounter.getValue(
             zookeeperPaths.consumersPath(),
             zookeeperPaths.subscriptionMetricPathWithoutBasePath(
-                topicName, subscriptionName, Metrics.Counter.CONSUMER_INFLIGHT.normalizedName()
+                    topicName, subscriptionName, normalizedName(pathCompiler.compile(Counters.CONSUMER_INFLIGHT))
             )
         );
     }
@@ -86,10 +89,10 @@ public class ZookeeperCounterStorage implements CounterStorage {
     @Override
     public int countInflightNodes(TopicName topicName, String subscriptionName) {
         return distributedCounter.countOccurrences(
-            zookeeperPaths.consumersPath(),
-            zookeeperPaths.subscriptionMetricPathWithoutBasePath(
-                topicName, subscriptionName, Metrics.Counter.CONSUMER_INFLIGHT.normalizedName()
-            )
+                zookeeperPaths.consumersPath(),
+                zookeeperPaths.subscriptionMetricPathWithoutBasePath(
+                        topicName, subscriptionName, normalizedName(pathCompiler.compile(Counters.CONSUMER_INFLIGHT))
+                )
         );
     }
 
@@ -101,12 +104,15 @@ public class ZookeeperCounterStorage implements CounterStorage {
         }
     }
 
-    private String topicMetricPath(TopicName topicName, Metrics.Counter counter) {
-        return zookeeperPaths.topicMetricPath(topicName, counter.normalizedName());
+    private String topicMetricPath(TopicName topicName, String counter) {
+        return zookeeperPaths.topicMetricPath(topicName, normalizedName(counter));
     }
 
-    private String subscriptionMetricPath(TopicName topicName, String subscriptionName, Metrics.Counter counter) {
-        return zookeeperPaths.subscriptionMetricPath(topicName, subscriptionName, counter.normalizedName());
+    private String subscriptionMetricPath(TopicName topicName, String subscriptionName, String counter) {
+        return zookeeperPaths.subscriptionMetricPath(topicName, subscriptionName, normalizedName(counter));
     }
 
+    static String normalizedName(String name) {
+        return name.substring(name.lastIndexOf(".") + 1);
+    }
 }
