@@ -1,8 +1,7 @@
 language: java
 
 install: ./gradlew assemble
-script: ./gradlew check integrationTest
+script: ./gradlew check integrationTest --info
 
 jdk:
   - oraclejdk8
-

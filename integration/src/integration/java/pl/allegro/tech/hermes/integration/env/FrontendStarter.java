@@ -59,7 +59,7 @@ public class FrontendStarter implements Starter<HermesFrontend> {
     private void waitForStartup() throws Exception {
         final HttpClient httpClient = HttpClientFactory.create();
 
-        await().atMost(Duration.TEN_SECONDS).until(() -> {
+        await().atMost(Duration.ONE_MINUTE).until(() -> {
             try {
                 return httpClient.GET(frontendUrl).getStatus() == 200;
             } catch (InterruptedException | ExecutionException | TimeoutException exception) {
