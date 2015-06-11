@@ -1,7 +1,16 @@
 dependencies {
+    compile group: 'org.eclipse.jetty.http2', name: 'http2-client', version: '9.3.0.RC1'
+    compile group: 'org.eclipse.jetty.http2', name: 'http2-http-client-transport', version: '9.3.0.RC1'
+    compile group: 'org.eclipse.jetty', name: 'jetty-client', version: '9.3.0.RC1'
+
+    alpnboot group: 'org.mortbay.jetty.alpn', name: 'alpn-boot', version: versions.alpnboot
+    provided group: 'org.eclipse.jetty.alpn', name: 'alpn-api', version: '1.1.2.v20150522'
+
     provided group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.1'
     provided group: 'org.glassfish.jersey.core', name: 'jersey-client', version: versions.jersey
     provided group: 'org.springframework', name: 'spring-web', version: '4.1.4.RELEASE'
+
+    testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.4.0'
 }
 
 apply plugin: 'idea'
