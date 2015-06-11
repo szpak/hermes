@@ -19,7 +19,7 @@ class NormalModeOutputRateCalculator implements ModeOutputRateCalculator {
         double calculatedRate = currentRate;
         OutputRateCalculator.Mode calculatedMode = OutputRateCalculator.Mode.NORMAL;
 
-        if (counters.noFailures() && currentRate < maximumOutputRate) {
+        if (!counters.failuresRatioExceeds(failuresRatioThreshold) && currentRate < maximumOutputRate) {
             double rateAddOn = (maximumOutputRate - currentRate) * rateConvergenceFactor;
             calculatedRate = Math.min(maximumOutputRate, currentRate + rateAddOn);
         } else if (counters.majorityOfFailures()) {

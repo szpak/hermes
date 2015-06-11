@@ -7,6 +7,7 @@ import pl.allegro.tech.hermes.consumers.consumer.receiver.Message;
 import javax.inject.Inject;
 
 public class SendingMessageTracker implements SendingTracker {
+    
     private final LogRepository repository;
     private final Clock clock;
 
