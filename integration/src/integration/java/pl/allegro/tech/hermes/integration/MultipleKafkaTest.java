@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MultipleKafkaTest extends IntegrationTest {
 
-    private final int frontendPort = 6793;
+    private final int frontendPort = 2015;
     private final String frontendUrl = "http://localhost:" + frontendPort + "/";
 
     private HermesPublisher publisher;
