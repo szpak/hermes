@@ -1,57 +1,138 @@
 package pl.allegro.tech.hermes.client.jetty;
 
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Response;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http.MetaData;
+import org.eclipse.jetty.http2.api.Session;
+import org.eclipse.jetty.http2.api.Stream;
+import org.eclipse.jetty.http2.api.server.ServerSessionListener;
 import org.eclipse.jetty.http2.client.HTTP2Client;
-import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
+import org.eclipse.jetty.http2.frames.DataFrame;
+import org.eclipse.jetty.http2.frames.Frame;
+import org.eclipse.jetty.http2.frames.HeadersFrame;
+import org.eclipse.jetty.http2.frames.PushPromiseFrame;
+import org.eclipse.jetty.http2.frames.ResetFrame;
+import org.eclipse.jetty.util.*;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import pl.allegro.tech.hermes.client.HermesMessage;
 import pl.allegro.tech.hermes.client.HermesResponse;
 import pl.allegro.tech.hermes.client.HermesSender;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 
 import static pl.allegro.tech.hermes.client.HermesResponseBuilder.hermesResponse;
 
 public class JettyHttp2HermesSender implements HermesSender {
 
-    private final HttpClient client;
+    private final SslContextFactory sslContextFactory;
 
     public JettyHttp2HermesSender() {
         this(new SslContextFactory(true));
     }
 
     public JettyHttp2HermesSender(SslContextFactory sslContextFactory) {
-        HTTP2Client http2Client = new HTTP2Client();
-        HttpClientTransportOverHTTP2 transport = new HttpClientTransportOverHTTP2(http2Client);
-        this.client = new HttpClient(transport, sslContextFactory);
-        transport.setHttpClient(this.client);
-        try {
-            this.client.start();
-        } catch (Exception e) {
-        }
+        this.sslContextFactory = sslContextFactory;
     }
 
     @Override
     public CompletableFuture<HermesResponse> send(URI uri, HermesMessage message) {
+        uri = URI.create("http://localhost:8443/");
         CompletableFuture<HermesResponse> future = new CompletableFuture<>();
-        uri = URI.create("https://http2.akamai.com/");
-        client.newRequest(uri)
-                .method(HttpMethod.POST)
-                .content(new StringContentProvider(message.getBody()))
-                .send(result -> {
-                    if (result.isSucceeded()) {
-                        future.complete(fromJettyResponse(result.getResponse()));
-                    } else {
-                        future.completeExceptionally(result.getFailure());
-                    }
-                });
+
+        HTTP2Client client = new HTTP2Client();
+        client.addBean(sslContextFactory);
+        try {
+            client.start();
+        } catch (Exception e) {
+            throw new RuntimeException("Could not start Jetty HTTP/2 client");
+        }
+
+        FuturePromise<Session> sessionPromise = new FuturePromise<>();
+        client.connect(sslContextFactory, new InetSocketAddress(uri.getHost(), uri.getPort()), new ServerSessionListener.Adapter(), sessionPromise);
+        Session session;
+        try {
+            session = sessionPromise.get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException("Could not connect to server", e);
+        }
+
+        HttpFields requestFields = new HttpFields();
+        requestFields.put("User-Agent", client.getClass().getName() + "/" + Jetty.VERSION);
+        requestFields.put("Content-Type", "application/json");
+        requestFields.put("Content-Length", message.getBody().getBytes().length + "");
+
+        MetaData.Request metaData = new MetaData.Request("POST", new HttpURI(uri), HttpVersion.HTTP_2, requestFields);
+        HeadersFrame headersFrame = new HeadersFrame(0, metaData, null, false);
+
+        session.newStream(headersFrame, new Promise<Stream>() {
+            @Override
+            public void succeeded(Stream stream) {
+                System.out.println("succeeded " + stream.getId());
+
+                ByteBuffer buffer = ByteBuffer.allocate(message.getBody().length());
+                buffer.put(message.getBody().getBytes());
+                DataFrame dataFrame = new DataFrame(stream.getId(), buffer, true);
+                FutureCallback callback = new FutureCallback();
+                stream.data(dataFrame, callback);
+
+            }
+            @Override
+            public void failed(Throwable x) {
+                System.out.println("failed");
+            }
+        }, new Stream.Listener.Adapter() {
+            @Override
+            public void onHeaders(Stream stream, HeadersFrame frame) {
+                System.out.println("on headers, " + stream.getId() + ", " + frame.isEndStream());
+                MetaData.Response response = (MetaData.Response) frame.getMetaData();
+
+                System.out.println(response.getStatus());
+                for (HttpField field : metaData.getFields()) {
+                    System.out.println(field.getName() + ": " + field.getValue());
+                }
+
+
+//                future.complete(hermesResponse().withHttpStatus(201).build());
+//                DataFrame dataFrame = new DataFrame(stream.getId(), buffer, true);
+//                FutureCallback callback = new FutureCallback();
+//                stream.data(dataFrame, callback);
+//
+//                try {
+//                    callback.get(5, TimeUnit.SECONDS);
+//
+//                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+//
+//                }
+            }
+
+            @Override
+            public void onData(Stream stream, DataFrame frame, Callback callback) {
+                System.out.println("on data, " + stream.getId() + ", " + frame.isEndStream());
+            }
+
+            @Override
+            public void onTimeout(Stream stream, Throwable x) {
+                System.out.println("on timeout");
+            }
+
+            @Override
+            public Stream.Listener onPush(Stream stream, PushPromiseFrame frame) {
+                System.out.println("on push");
+                return null;
+            }
+
+            @Override
+            public void onReset(Stream stream, ResetFrame frame) {
+                System.out.println("on reset");
+            }
+        });
+
         return future;
     }
 

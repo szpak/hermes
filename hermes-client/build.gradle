@@ -20,3 +20,7 @@ idea {
         scopes.PROVIDED.plus += [configurations.provided]
     }
 }
+
+test {
+    jvmArgs "-Xbootclasspath/p:" + configurations.alpnboot.asPath
+}
