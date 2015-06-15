@@ -3,7 +3,10 @@ package pl.allegro.tech.hermes.frontend.server;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import io.undertow.Undertow;
+import io.undertow.io.Sender;
+import io.undertow.server.BlockingHttpExchange;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.RequestDumpingHandler;
 import io.undertow.servlet.Servlets;
@@ -31,8 +34,10 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.concurrent.Executors;
@@ -116,20 +121,22 @@ public class HermesServer {
                 .setIoThreads(configFactory.getIntProperty(FRONTEND_IO_THREADS_COUNT))
                 .setWorkerThreads(configFactory.getIntProperty(FRONTEND_WORKER_THREADS_COUNT))
                 .setBufferSize(configFactory.getIntProperty(FRONTEND_BUFFER_SIZE))
-//                .setHandler(gracefulShutdown)
-                .setHandler(exchange -> {
-                    if (exchange.isInIoThread()) {
-                        exchange.dispatch(Executors.newSingleThreadExecutor(), ex ->
-                        {
-                            exchange.setResponseCode(201);
-                            exchange.startBlocking();
-                            String data = CharStreams.toString(new InputStreamReader(ex.getInputStream()));
-                            exchange.getRequestHeaders().forEach(header -> System.out.println(header.getHeaderName() + " = " + header.getFirst()));
-                            System.out.println("data: " + data);
-                        });
-                        return;
-                    }
+                .setHandler(new HttpHandler() {
+                    @Override
+                    public void handleRequest(HttpServerExchange exchange) throws Exception {
+                        if (exchange.isInIoThread()) {
+                            exchange.dispatch(this);
+                            return;
+                        }
+                        exchange.startBlocking();
 
+                        exchange.getRequestHeaders().forEach(header -> System.out.println(header.getHeaderName() + " = " + header.getFirst()));
+                        String data = CharStreams.toString(new InputStreamReader(exchange.getInputStream()));
+                        System.out.println("data: " + data);
+
+                        exchange.setResponseCode(201);
+                        exchange.getResponseSender().send("thank you");
+                    }
                 })
                 .build();
 
