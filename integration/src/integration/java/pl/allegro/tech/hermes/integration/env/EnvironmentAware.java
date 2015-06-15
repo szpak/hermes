@@ -14,21 +14,27 @@ public interface EnvironmentAware {
     int HTTP_ENDPOINT_PORT = 18081;
 
     int MANAGEMENT_PORT = 18082;
-    
+
     String HTTP_ENDPOINT_URL = "http://localhost:" + HTTP_ENDPOINT_PORT + "/";
 
     int FRONTEND_PORT = CONFIG_FACTORY.getIntProperty(Configs.FRONTEND_PORT);
-    
+
+    int FRONTEND_SSL_PORT = CONFIG_FACTORY.getIntProperty(Configs.FRONTEND_SSL_PORT);
+
     String FRONTEND_URL = "http://localhost:" + FRONTEND_PORT + "/";
+
+    String FRONTEND_SSL_URL = "https://localhost:" + FRONTEND_SSL_PORT + "/";
 
     String CLIENT_FRONTEND_URL = "http://localhost:" + FRONTEND_PORT;
 
+    String CLIENT_FRONTEND_SSL_URL = "https://localhost:" + FRONTEND_SSL_PORT;
+
     String FRONTEND_TOPICS_ENDPOINT = FRONTEND_URL + "topics";
-    
+
     String FRONTEND_HEALTH_ENDPOINT = FRONTEND_URL + "status/health";
 
     String MANAGEMENT_ENDPOINT_URL = "http://localhost:" + MANAGEMENT_PORT + "/";
-    
+
     int GRAPHITE_HTTP_SERVER_PORT = 18089;
 
     int GRAPHITE_SERVER_PORT = 18023;

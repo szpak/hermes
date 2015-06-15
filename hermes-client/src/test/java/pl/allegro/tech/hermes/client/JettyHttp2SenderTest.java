@@ -48,7 +48,7 @@ public class JettyHttp2SenderTest {
     }
 
     @Test
-    public void shouldPublishMessageViaHttp2Protocol() throws URISyntaxException, IOException {
+    public void shouldPublisqhMessageHEViaHttp2Protocol() throws URISyntaxException, IOException {
         // given
 //        MockWebServer server = createMockWebServer();
 //        server.enqueue(new MockResponse().setResponseCode(201));
@@ -59,7 +59,7 @@ public class JettyHttp2SenderTest {
         HermesClient client = hermesClient(new JettyHttp2HermesSender()).withURI(uri).build();
 
         // when
-        HermesResponse response = client.publish("topic", "message").join();
+        HermesResponse response = client.publish("topic", "what up?").join();
 
         // then
 //        System.out.println(response.getFailureCause().get());

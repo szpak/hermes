@@ -24,6 +24,7 @@ import pl.allegro.tech.hermes.client.HermesSender;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.concurrent.*;
 
 import static pl.allegro.tech.hermes.client.HermesResponseBuilder.hermesResponse;
@@ -42,7 +43,8 @@ public class JettyHttp2HermesSender implements HermesSender {
 
     @Override
     public CompletableFuture<HermesResponse> send(URI uri, HermesMessage message) {
-        uri = URI.create("http://localhost:8443/");
+//        uri = URI.create("https://localhost:8081/");
+        uri = URI.create("https://localhost:8443/");
         CompletableFuture<HermesResponse> future = new CompletableFuture<>();
 
         HTTP2Client client = new HTTP2Client();
@@ -63,9 +65,10 @@ public class JettyHttp2HermesSender implements HermesSender {
         }
 
         HttpFields requestFields = new HttpFields();
+        requestFields.put("Host", uri.getHost() + ":" + uri.getPort());
         requestFields.put("User-Agent", client.getClass().getName() + "/" + Jetty.VERSION);
-        requestFields.put("Content-Type", "application/json");
-        requestFields.put("Content-Length", message.getBody().getBytes().length + "");
+        requestFields.put("Content-Type", "text/plain");
+        requestFields.put("Content-Length", message.getBody().getBytes(Charset.forName("UTF-8")).length + "");
 
         MetaData.Request metaData = new MetaData.Request("POST", new HttpURI(uri), HttpVersion.HTTP_2, requestFields);
         HeadersFrame headersFrame = new HeadersFrame(0, metaData, null, false);
@@ -76,12 +79,21 @@ public class JettyHttp2HermesSender implements HermesSender {
                 System.out.println("succeeded " + stream.getId());
 
                 ByteBuffer buffer = ByteBuffer.allocate(message.getBody().length());
-                buffer.put(message.getBody().getBytes());
+                buffer.put(message.getBody().getBytes(Charset.forName("UTF-8")));
                 DataFrame dataFrame = new DataFrame(stream.getId(), buffer, true);
-                FutureCallback callback = new FutureCallback();
-                stream.data(dataFrame, callback);
+                stream.data(dataFrame, new Callback() {
+                    @Override
+                    public void succeeded() {
+                        System.out.println("succeeded callback");
+                    }
 
+                    @Override
+                    public void failed(Throwable x) {
+                        System.out.println("failed callback");
+                    }
+                });
             }
+
             @Override
             public void failed(Throwable x) {
                 System.out.println("failed");
@@ -93,27 +105,22 @@ public class JettyHttp2HermesSender implements HermesSender {
                 MetaData.Response response = (MetaData.Response) frame.getMetaData();
 
                 System.out.println(response.getStatus());
-                for (HttpField field : metaData.getFields()) {
+                for (HttpField field : frame.getMetaData().getFields()) {
                     System.out.println(field.getName() + ": " + field.getValue());
                 }
-
-
-//                future.complete(hermesResponse().withHttpStatus(201).build());
-//                DataFrame dataFrame = new DataFrame(stream.getId(), buffer, true);
-//                FutureCallback callback = new FutureCallback();
-//                stream.data(dataFrame, callback);
-//
-//                try {
-//                    callback.get(5, TimeUnit.SECONDS);
-//
-//                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-//
-//                }
             }
 
             @Override
             public void onData(Stream stream, DataFrame frame, Callback callback) {
-                System.out.println("on data, " + stream.getId() + ", " + frame.isEndStream());
+                byte[] bytes = new byte[frame.getData().remaining()];
+                frame.getData().get(bytes);
+                System.out.println("on data, " + stream.getId() + ", " + frame.isEndStream() + ", " + new String(bytes));
+                try {
+                    client.stop();
+                } catch (Exception e) {
+                    future.complete(hermesResponse().withHttpStatus(205).build());
+                    e.printStackTrace();
+                }
             }
 
             @Override

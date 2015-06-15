@@ -7,6 +7,7 @@ import pl.allegro.tech.hermes.api.TopicName;
 import pl.allegro.tech.hermes.client.HermesClient;
 import pl.allegro.tech.hermes.client.HermesResponse;
 import pl.allegro.tech.hermes.client.jersey.JerseyHermesSender;
+import pl.allegro.tech.hermes.client.jetty.JettyHttp2HermesSender;
 import pl.allegro.tech.hermes.client.restTemplate.RestTemplateHermesSender;
 import pl.allegro.tech.hermes.test.helper.message.TestMessage;
 
@@ -33,7 +34,7 @@ public class HermesClientPublishingTest extends IntegrationTest {
     public void shouldPublishUsingJerseyClient() {
         // given
         HermesClient client = hermesClient(new JerseyHermesSender(newClient())).withURI(topicURI).build();
-        
+
         // when & then
         runTestSuiteForHermesClient(client);
     }
@@ -42,6 +43,15 @@ public class HermesClientPublishingTest extends IntegrationTest {
     public void shouldPublishUsingRestTemplate() {
         // given
         HermesClient client = hermesClient(new RestTemplateHermesSender(new AsyncRestTemplate())).withURI(topicURI).build();
+
+        // when & then
+        runTestSuiteForHermesClient(client);
+    }
+
+    @Test
+    public void shouldPublishUsingJettyHttp2Client() {
+        // given
+        HermesClient client = hermesClient(new JettyHttp2HermesSender()).withURI(URI.create(FRONTEND_SSL_URL)).build();
 
         // when & then
         runTestSuiteForHermesClient(client);

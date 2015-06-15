@@ -1,6 +1,7 @@
 package pl.allegro.tech.hermes.frontend.server;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharStreams;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.PathHandler;
@@ -10,6 +11,8 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.util.ImmediateInstanceFactory;
+import org.apache.zookeeper.common.IOUtils;
+import org.xnio.IoUtils;
 import pl.allegro.tech.hermes.common.config.ConfigFactory;
 import pl.allegro.tech.hermes.common.config.Configs;
 import pl.allegro.tech.hermes.common.metric.HermesMetrics;
@@ -29,8 +32,10 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.concurrent.Executors;
 
 import static io.undertow.Handlers.path;
 import static io.undertow.Handlers.redirect;
@@ -111,7 +116,21 @@ public class HermesServer {
                 .setIoThreads(configFactory.getIntProperty(FRONTEND_IO_THREADS_COUNT))
                 .setWorkerThreads(configFactory.getIntProperty(FRONTEND_WORKER_THREADS_COUNT))
                 .setBufferSize(configFactory.getIntProperty(FRONTEND_BUFFER_SIZE))
-                .setHandler(gracefulShutdown)
+//                .setHandler(gracefulShutdown)
+                .setHandler(exchange -> {
+                    if (exchange.isInIoThread()) {
+                        exchange.dispatch(Executors.newSingleThreadExecutor(), ex ->
+                        {
+                            exchange.setResponseCode(201);
+                            exchange.startBlocking();
+                            String data = CharStreams.toString(new InputStreamReader(ex.getInputStream()));
+                            exchange.getRequestHeaders().forEach(header -> System.out.println(header.getHeaderName() + " = " + header.getFirst()));
+                            System.out.println("data: " + data);
+                        });
+                        return;
+                    }
+
+                })
                 .build();
 
         return undertow;
