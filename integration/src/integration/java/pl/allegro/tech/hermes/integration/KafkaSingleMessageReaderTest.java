@@ -68,7 +68,7 @@ public class KafkaSingleMessageReaderTest extends IntegrationTest {
     public void shouldReturnNotFoundErrorForNonExistingPartition() {
         // given
         operations.buildTopic("notFoundErrorForNonExistingPartition", "partitionTestTopic");
-        wait.
+        wait.untilTopicIsCreated("notFoundErrorForNonExistingPartition", "partitionTestTopic");
 
         // when
         catchException(management.topic()).preview("notFoundErrorForNonExistingPartition.partitionTestTopic", PRIMARY_KAFKA_CLUSTER_NAME, 10, 0L);
