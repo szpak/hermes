@@ -26,7 +26,7 @@ public class HermesAPIOperations {
 
     public void createGroup(String group) {
         if (!endpoints.group().list().contains(group)) {
-            await().atMost(Duration.ONE_MINUTE).until(() -> {
+            await().atMost(Duration.TEN_SECONDS).until(() -> {
                 Response response = endpoints.group().create(Group.from(group));
                 return response.getStatus() == Response.Status.CREATED.getStatusCode();
             });
@@ -43,7 +43,7 @@ public class HermesAPIOperations {
         topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), true));
 
         if (!topicList.contains(topic.getQualifiedName())) {
-            await().atMost(Duration.ONE_MINUTE).until(() -> {
+            await().atMost(Duration.TEN_SECONDS).until(() -> {
                 Response response = endpoints.topic().create(topic);
 
                 return response.getStatus() == Response.Status.CREATED.getStatusCode();
@@ -63,7 +63,7 @@ public class HermesAPIOperations {
     }
 
     public void createSubscription(String group, String topic, Subscription subscription) {
-        await().atMost(Duration.ONE_MINUTE).until(() -> {
+        await().atMost(Duration.TEN_SECONDS).until(() -> {
             Response respone = endpoints.subscription().create(group + "." + topic, subscription);
             return respone.getStatus() == Response.Status.CREATED.getStatusCode();
         });
