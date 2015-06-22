@@ -207,13 +207,13 @@ public class MessageTrackingTest extends IntegrationTest {
 
         // when
         operations.updateSubscription("toggleTrackingOnSubscription", "topic", "subscription",
-                subscription().applyPatch(subscription).withTrackingEnabled(false).build());
+                subscription().applyDefaults().applyPatch(subscription).withTrackingEnabled(false).build());
 
         publishMessage("toggleTrackingOnSubscription.topic", MESSAGE.body());
         remoteService.waitUntilReceived();
 
         operations.updateSubscription("toggleTrackingOnSubscription", "topic", "subscription",
-                subscription().applyPatch(subscription).withTrackingEnabled(true).build());
+                subscription().applyDefaults().applyPatch(subscription).withTrackingEnabled(true).build());
 
         remoteService.expectMessages(MESSAGE.body());
         String secondTracked = publishMessage("toggleTrackingOnSubscription.topic", MESSAGE.body());
