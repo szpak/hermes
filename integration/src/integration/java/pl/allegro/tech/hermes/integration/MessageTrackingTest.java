@@ -181,7 +181,7 @@ public class MessageTrackingTest extends IntegrationTest {
         operations.buildTopic(topic);
 
         // when
-        operations.updateTopic(topicName, topic().applyDefaults().withTrackingEnabled(true).build());
+        operations.updateTopic(topicName, topic().applyDefaults().applyPatch(topic).withTrackingEnabled(true).build());
 
         Topic updatedTopic = operations.getTopic("ackStaysOnTracking", "topic");
 

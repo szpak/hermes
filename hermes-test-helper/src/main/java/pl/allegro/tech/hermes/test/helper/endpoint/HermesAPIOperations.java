@@ -123,7 +123,7 @@ public class HermesAPIOperations {
     }
 
     public void updateTopic(TopicName topicName, Topic updated) {
-        Response response = endpoints.topic().update(topicName.qualifiedName(), updated);
+        endpoints.topic().update(topicName.qualifiedName(), updated);
 
         waitAtMost(Duration.ONE_MINUTE).until(() -> {
             return endpoints.topic().get(topicName.qualifiedName()).equals(updated);
