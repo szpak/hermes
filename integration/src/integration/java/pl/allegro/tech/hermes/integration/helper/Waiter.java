@@ -190,7 +190,7 @@ public class Waiter {
     }
 
     private void untilZookeeperNodeCreation(final String path, final CuratorFramework zookeeper) {
-        await().atMost(adjust(20), TimeUnit.SECONDS).until(() -> zookeeper.checkExists().forPath(path) != null);
+        await().atMost(adjust(Duration.ONE_MINUTE)).until(() -> zookeeper.checkExists().forPath(path) != null);
     }
 
     private void untilZookeeperNodeDeletion(final String path, final CuratorFramework zookeeper) {
