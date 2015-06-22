@@ -69,8 +69,6 @@ public class SubscriptionManagementTest extends IntegrationTest {
         operations.createTopic("suspendSubscriptionGroup", "topic");
         operations.createSubscription("suspendSubscriptionGroup", "topic", "subscription", HTTP_ENDPOINT_URL);
 
-        wait.untilSubscriptionIsCreated("suspendSubscriptionGroup", "topic", "subscription");
-
         // when
         Response response = management.subscription().updateState(
                 "suspendSubscriptionGroup.topic",

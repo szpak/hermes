@@ -23,7 +23,6 @@ public class PublishingTimeoutTest extends IntegrationTest {
     public void shouldHandleRequestTimeout() throws IOException, InterruptedException {
         // given
         operations.buildTopic("handleRequestTimeout", "topic");
-        wait.untilTopicIsCreated("handleRequestTimeout", "topic");
 
         int clientTimeout = 5000;
         int pauseTimeBetweenChunks = 300;
@@ -45,7 +44,6 @@ public class PublishingTimeoutTest extends IntegrationTest {
     public void shouldCloseConnectionAfterSendingDelayData() throws IOException, InterruptedException {
         //given
         operations.buildTopic("closeConnectionAfterSendingDelayData", "topic");
-        wait.untilTopicIsCreated("closeConnectionAfterSendingDelayData", "topic");
 
         int clientTimeout = 5000;
         int pauseTimeBetweenChunks = 0;

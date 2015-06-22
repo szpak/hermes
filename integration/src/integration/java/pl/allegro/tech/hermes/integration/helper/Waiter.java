@@ -51,24 +51,9 @@ public class Waiter {
         untilZookeeperNodeEmptied(path, seconds, kafkaZookeeper);
     }
 
-    public void untilGroupIsCreated(String groupName) {
-        untilZookeeperNodeCreation(zookeeperPaths.groupPath(groupName));
-    }
-    
+
     public void untilTopicDetailsAreCreated(TopicName topicName) {
         untilZookeeperNodeCreation(zookeeperPaths.topicPath(topicName));
-    }
-
-    public void untilTopicIsCreated(String groupName, String topicName) {
-        untilZookeeperNodeCreation(zookeeperPaths.topicPath(new TopicName(groupName, topicName)));
-    }
-    
-    public void untilSubscriptionIsCreated(TopicName topicName, String subscription) {
-        untilSubscriptionIsCreated(topicName.getGroupName(), topicName.getName(), subscription);
-    }
-
-    public void untilSubscriptionIsCreated(String group, String topic, String subscription) {
-        untilKafkaZookeeperNodeCreation(subscriptionConsumerPath(group, topic, subscription));
     }
 
     public void untilSubscriptionMetricsIsCreated(TopicName topicName, String subscriptionName) {

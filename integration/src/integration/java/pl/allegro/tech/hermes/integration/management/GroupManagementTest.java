@@ -31,7 +31,6 @@ public class GroupManagementTest extends IntegrationTest {
         final String groupName = "groupToUpdate";
         final String supportTeam = "Skylab";
         operations.createGroup(groupName);
-        wait.untilGroupIsCreated(groupName);
         Group modifiedGroup = group().withGroupName(groupName).withSupportTeam(supportTeam).build();
 
         // when
@@ -45,9 +44,7 @@ public class GroupManagementTest extends IntegrationTest {
     public void shouldListGroups() {
         // given
         operations.createGroup("listGroupsGroup1");
-        wait.untilGroupIsCreated("listGroupsGroup1");
         operations.createGroup("listGroupsGroup2");
-        wait.untilGroupIsCreated("listGroupsGroup2");
 
         // when then
         Assertions.assertThat(management.group().list()).containsOnlyOnce("listGroupsGroup1", "listGroupsGroup2");
@@ -96,7 +93,6 @@ public class GroupManagementTest extends IntegrationTest {
         // given
         operations.createGroup("removeNonemptyGroup");
         operations.createTopic(topic().withName("removeNonemptyGroup", "topic").build());
-        wait.untilTopicIsCreated("removeNonemptyGroup", "topic");
 
         // when
         Response response = management.group().delete("removeNonemptyGroup");
