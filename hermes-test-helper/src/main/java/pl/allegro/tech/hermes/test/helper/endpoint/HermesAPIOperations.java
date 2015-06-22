@@ -27,7 +27,7 @@ public class HermesAPIOperations {
 
     public void createGroup(String group) {
         if (!endpoints.group().list().contains(group)) {
-            waitAtMost(Duration.TEN_SECONDS).until(() -> {
+            waitAtMost(Duration.ONE_MINUTE).until(() -> {
                 Response response = endpoints.group().create(Group.from(group));
                 return response.getStatus() == Response.Status.CREATED.getStatusCode();
             });
