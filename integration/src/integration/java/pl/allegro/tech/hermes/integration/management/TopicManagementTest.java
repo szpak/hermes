@@ -95,7 +95,7 @@ public class TopicManagementTest extends IntegrationTest {
         operations.createTopic(topic().withName("topicManagementTestOverrideTopicGroup", "topic").build());
 
         // when
-        Response response = management.topic().create(topic().withName("overrideTopicGroup", "topic").build());
+        Response response = management.topic().create(topic().withName("topicManagementTestOverrideTopicGroup", "topic").build());
 
         // then
         assertThat(response).hasStatus(Response.Status.BAD_REQUEST).hasErrorCode(ErrorCode.TOPIC_ALREADY_EXISTS);
