@@ -10,6 +10,20 @@ import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 public class Topic {
+
+    @Override
+    public String toString() {
+        return "Topic{" +
+                "name=" + name +
+                ", description='" + description + '\'' +
+                ", messageSchema='" + messageSchema + '\'' +
+                ", validationEnabled=" + validationEnabled +
+                ", ack=" + ack +
+                ", retentionTime=" + retentionTime +
+                ", trackingEnabled=" + trackingEnabled +
+                '}';
+    }
+
     @Valid @NotNull
     private TopicName name;
 

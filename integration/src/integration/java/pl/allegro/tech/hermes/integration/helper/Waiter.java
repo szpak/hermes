@@ -169,10 +169,6 @@ public class Waiter {
         await().atMost(adjust(Duration.FIVE_SECONDS)).until(() -> zookeeper.checkExists().forPath(path) == null);
     }
 
-    public void untilTopicUpdated() {
-        sleep(2);
-    }
-
     public void untilSubscriptionIsSuspended(HermesEndpoints management, String qualifiedTopicName, String subscription) {
         await().atMost(adjust(Duration.ONE_MINUTE)).until(() ->
                 management.subscription().get(qualifiedTopicName, subscription).getState().equals(Subscription.State.SUSPENDED));

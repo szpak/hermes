@@ -160,13 +160,11 @@ public class MessageTrackingTest extends IntegrationTest {
         wait.untilMessageIdLogged(publishedMessages, firstTracked);
 
         // when
-        operations.updateTopic(topicName, topic().applyPatch(topic).withTrackingEnabled(false).build());
-        wait.untilTopicUpdated();
+        operations.updateTopic(topicName, topic().applyDefaults().applyPatch(topic).withTrackingEnabled(false).build());
 
         publishMessage("toggleTrackingOnTopic.topic", MESSAGE.body());
 
-        operations.updateTopic(topicName, topic().applyPatch(topic).withTrackingEnabled(true).build());
-        wait.untilTopicUpdated();
+        operations.updateTopic(topicName, topic().applyDefaults().applyPatch(topic).withTrackingEnabled(true).build());
 
         String secondTracked = publishMessage("toggleTrackingOnTopic.topic", MESSAGE.body());
         wait.untilMessageIdLogged(publishedMessages, secondTracked);
@@ -183,8 +181,7 @@ public class MessageTrackingTest extends IntegrationTest {
         operations.buildTopic(topic);
 
         // when
-        operations.updateTopic(topicName, topic().withTrackingEnabled(true).build());
-        wait.untilTopicUpdated();
+        operations.updateTopic(topicName, topic().applyDefaults().withTrackingEnabled(true).build());
 
         Topic updatedTopic = operations.getTopic("ackStaysOnTracking", "topic");
 
