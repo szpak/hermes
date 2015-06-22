@@ -251,12 +251,13 @@ public class PublishingTest extends IntegrationTest {
     @Test
     public void shouldPublishMessageUsingChunkedEncoding() throws UnsupportedEncodingException {
         // given
-        operations.buildTopic("chunked", "topic");
+        String groupName = "publishMessageUsingChunkedEncoding";
+        operations.buildTopic(groupName, "topic");
 
         // when
         Response response = newClient(new ClientConfig().property(REQUEST_ENTITY_PROCESSING, CHUNKED))
                 .target(FRONTEND_TOPICS_ENDPOINT)
-                .path("chunked.topic").request().post(Entity.text("{}"));
+                .path(groupName + ".topic").request().post(Entity.text("{}"));
 
         // then
         assertThat(response).hasStatus(CREATED);
@@ -264,8 +265,8 @@ public class PublishingTest extends IntegrationTest {
 
     @Test
     public void shouldNotCreateTopicWhenPublishingToNonExistingTopic() throws Exception {
-        TopicName nonExisting = TopicName.fromQualifiedName("nonExistingGroup.nonExistingTopic8326");
-        TopicName existing = TopicName.fromQualifiedName("existingGroup.topic");
+        TopicName nonExisting = TopicName.fromQualifiedName("notCreateTopicWhenPublishingToNonExistingTopicNonExistingGroup.topic");
+        TopicName existing = TopicName.fromQualifiedName("notCreateTopicWhenPublishingToNonExistingTopicExistingGroup.topic");
         operations.buildTopic(existing.getGroupName(), existing.getName());
 
         Response responseForNonExisting = publisher.publish(nonExisting.qualifiedName(), TestMessage.simple().body());
@@ -282,10 +283,10 @@ public class PublishingTest extends IntegrationTest {
     public void shouldPublishValidMessageWithJsonSchema() {
         //given
         String message = "{\"id\": 6}";
-        operations.buildTopic(topic().withName("schema.topic").withValidation(true).withMessageSchema(schema).build());
+        operations.buildTopic(topic().withName("publishValidMessageWithJsonSchema.topic").withValidation(true).withMessageSchema(schema).build());
 
         //when
-        Response response = publisher.publish("schema.topic", message);
+        Response response = publisher.publish("publishValidMessageWithJsonSchema.topic", message);
 
         //then
         assertThat(response).hasStatus(CREATED);
@@ -295,10 +296,10 @@ public class PublishingTest extends IntegrationTest {
     public void shouldNotPublishInvalidMessageWithJsonSchema() {
         // given
         String messageInvalidWithSchema = "{\"id\": \"shouldBeNumber\"}";
-        operations.buildTopic(topic().withName("schema.topic").withValidation(true).withMessageSchema(schema).build());
+        operations.buildTopic(topic().withName("notPublishInvalidMessageWithJsonSchema.topic").withValidation(true).withMessageSchema(schema).build());
 
         //when
-        Response response = publisher.publish("schema.topic", messageInvalidWithSchema);
+        Response response = publisher.publish("notPublishInvalidMessageWithJsonSchema.topic", messageInvalidWithSchema);
 
         //then
         assertThat(response).hasStatus(BAD_REQUEST);

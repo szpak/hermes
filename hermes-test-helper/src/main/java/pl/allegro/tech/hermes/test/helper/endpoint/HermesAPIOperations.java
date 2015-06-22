@@ -6,9 +6,11 @@ import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.api.TopicName;
 
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static pl.allegro.tech.hermes.api.EndpointAddress.of;
-import static pl.allegro.tech.hermes.api.Group.Builder.group;
 import static pl.allegro.tech.hermes.api.Subscription.Builder.subscription;
 import static pl.allegro.tech.hermes.api.SubscriptionPolicy.Builder.subscriptionPolicy;
 import static pl.allegro.tech.hermes.api.Topic.Builder.topic;
@@ -21,21 +23,27 @@ public class HermesAPIOperations {
         this.endpoints = endpoints;
     }
 
-    public Response createGroup(String group, String supportTeam) {
-        return endpoints.group().create(group().withGroupName(group).withSupportTeam(supportTeam).build());
+    public void createGroup(String group) {
+        if (!endpoints.group().list().contains(group)) {
+            Response response = endpoints.group().create(Group.from(group));
+            assertThat(response.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+        }
     }
 
-    public Response createGroup(String group) {
-        return endpoints.group().create(Group.from(group));
-    }
-
-    public Response createTopic(String group, String topic) {
-        return endpoints.topic().create(
-                topic().withName(group, topic).withRetentionTime(1000).withDescription("Test topic").build());
+    public void createTopic(String group, String topic) {
+        createTopic(topic().withName(group, topic).withRetentionTime(1000).withDescription("Test topic").build());
     }
 
     public void createTopic(Topic topic) {
-        endpoints.topic().create(topic);
+        List<String> topicList = new ArrayList<>();
+        topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), false));
+        topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), true));
+
+        if (!topicList.contains(topic.getQualifiedName())) {
+            Response response = endpoints.topic().create(topic);
+
+            assertThat(response.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+        }
     }
 
     public Response createSubscription(String group, String topic, String subscriptionName, String endpoint) {
@@ -50,7 +58,9 @@ public class HermesAPIOperations {
     }
 
     public Response createSubscription(String group, String topic, Subscription subscription) {
-        return endpoints.subscription().create(group + "." + topic, subscription);
+        Response respone = endpoints.subscription().create(group + "." + topic, subscription);
+        assertThat(respone.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+        return respone;
     }
 
     public void buildTopic(String group, String topic) {

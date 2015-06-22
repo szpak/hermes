@@ -20,11 +20,13 @@ public class FrontendStarter implements Starter<HermesFrontend> {
     private final MutableConfigFactory configFactory;
     private final String frontendUrl;
     private HermesFrontend hermesFrontend;
+    private OkHttpClient client;
 
 
     public FrontendStarter(String frontendUrl) {
         this.frontendUrl = frontendUrl;
         configFactory = new MutableConfigFactory();
+        client = new OkHttpClient();
     }
 
     @Override
@@ -55,8 +57,6 @@ public class FrontendStarter implements Starter<HermesFrontend> {
     }
 
     private void waitForStartup() throws Exception {
-        OkHttpClient client = new OkHttpClient();
-
         await().atMost(Duration.TEN_SECONDS).until(() -> {
             Request request14192 = new Request.Builder()
                     .url(frontendUrl)

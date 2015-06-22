@@ -22,7 +22,9 @@ public class PublishingTimeoutTest extends IntegrationTest {
     @Test
     public void shouldHandleRequestTimeout() throws IOException, InterruptedException {
         // given
-        operations.buildTopic("timeoutGroup", "timeoutTopic");
+        operations.buildTopic("handleRequestTimeout", "topic");
+        wait.untilTopicIsCreated("handleRequestTimeout", "topic");
+
         int clientTimeout = 5000;
         int pauseTimeBetweenChunks = 300;
         int delayBeforeSendingFirstData = 0;
@@ -30,7 +32,7 @@ public class PublishingTimeoutTest extends IntegrationTest {
         // when
         long start = System.currentTimeMillis();
         String response = client.slowEvent(
-            clientTimeout, pauseTimeBetweenChunks, delayBeforeSendingFirstData, "timeoutGroup.timeoutTopic"
+            clientTimeout, pauseTimeBetweenChunks, delayBeforeSendingFirstData, "handleRequestTimeout.topic"
         );
         long elapsed = System.currentTimeMillis() - start;
 
@@ -42,14 +44,16 @@ public class PublishingTimeoutTest extends IntegrationTest {
     @Test
     public void shouldCloseConnectionAfterSendingDelayData() throws IOException, InterruptedException {
         //given
-        operations.buildTopic("timeoutGroup", "closeConnectionTopic");
+        operations.buildTopic("closeConnectionAfterSendingDelayData", "topic");
+        wait.untilTopicIsCreated("closeConnectionAfterSendingDelayData", "topic");
+
         int clientTimeout = 5000;
         int pauseTimeBetweenChunks = 0;
         int delayBeforeSendingFirstData = 3000;
 
         //when
         catchException(client).slowEvent(
-            clientTimeout, pauseTimeBetweenChunks, delayBeforeSendingFirstData, "timeoutGroup.closeConnectionTopic"
+            clientTimeout, pauseTimeBetweenChunks, delayBeforeSendingFirstData, "closeConnectionAfterSendingDelayData.topic"
         );
 
         //then

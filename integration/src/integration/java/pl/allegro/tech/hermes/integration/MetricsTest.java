@@ -158,11 +158,10 @@ public class MetricsTest extends IntegrationTest {
         assertThat(management.topic().list(newTopic.getGroupName(), false)).doesNotContain(newTopic.qualifiedName());
     }
 
-    @Unreliable
-    @Test(enabled = false)
+    @Test
     public void shouldNotReportMetricsToConfigStorageForRemovedSubscription() {
         //given
-        TopicName topicName = TopicName.fromQualifiedName("metricsAfterSubscriptionRemovedGroup.topic");
+        TopicName topicName = TopicName.fromQualifiedName("notReportMetricsToConfigStorageForRemovedSubscription.topic");
         String subscriptionName1 = "subscription";
         operations.buildSubscription(topicName.getGroupName(), topicName.getName(), subscriptionName1, HTTP_ENDPOINT_URL);
         wait.untilSubscriptionIsCreated(topicName.getGroupName(), topicName.getName(), subscriptionName1);

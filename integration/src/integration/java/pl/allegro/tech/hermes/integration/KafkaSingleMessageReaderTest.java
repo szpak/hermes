@@ -28,13 +28,13 @@ public class KafkaSingleMessageReaderTest extends IntegrationTest {
     @Test
     public void shouldFetchSingleMessageByTopicPartitionAndOffset() {
         // given
-        operations.buildSubscription("kafkaPreviewTestGroup", "topic", "subscription", HTTP_ENDPOINT_URL);
+        operations.buildSubscription("fetchSingleMessageByTopicPartitionAndOffset", "topic", "subscription", HTTP_ENDPOINT_URL);
 
         List<String> messages = new ArrayList<String>() {{ range(0, 3).forEach(i -> add(TestMessage.random().body())); }};
 
         remoteService.expectMessages(messages);
 
-        String qualifiedTopicName = "kafkaPreviewTestGroup.topic";
+        String qualifiedTopicName = "fetchSingleMessageByTopicPartitionAndOffset.topic";
         messages.forEach(message -> publisher.publish(qualifiedTopicName, message));
 
         remoteService.waitUntilReceived();
@@ -49,16 +49,16 @@ public class KafkaSingleMessageReaderTest extends IntegrationTest {
     @Test
     public void shouldReturnNotFoundErrorForNonExistingOffset() {
         // given
-        operations.buildSubscription("kafkaPreviewTestGroup", "offsetTestTopic", "subscription", HTTP_ENDPOINT_URL);
+        operations.buildSubscription("notFoundErrorForNonExistingOffset", "offsetTestTopic", "subscription", HTTP_ENDPOINT_URL);
         List<String> messages = new ArrayList<String>() {{ range(0, 3).forEach(i -> add(TestMessage.random().body())); }};
 
         remoteService.expectMessages(messages);
-        messages.forEach(message -> publisher.publish("kafkaPreviewTestGroup.offsetTestTopic", message));
+        messages.forEach(message -> publisher.publish("notFoundErrorForNonExistingOffset.offsetTestTopic", message));
 
         remoteService.waitUntilReceived();
 
         // when
-        catchException(management.topic()).preview("kafkaPreviewTestGroup.offsetTestTopic", PRIMARY_KAFKA_CLUSTER_NAME, 0, 10L);
+        catchException(management.topic()).preview("notFoundErrorForNonExistingOffset.offsetTestTopic", PRIMARY_KAFKA_CLUSTER_NAME, 0, 10L);
 
         // then
         assertThat(CatchException.<NotFoundException>caughtException()).isInstanceOf(NotFoundException.class);
@@ -67,10 +67,10 @@ public class KafkaSingleMessageReaderTest extends IntegrationTest {
     @Test
     public void shouldReturnNotFoundErrorForNonExistingPartition() {
         // given
-        operations.buildTopic("kafkaPreviewTestGroup", "partitionTestTopic");
+        operations.buildTopic("notFoundErrorForNonExistingPartition", "partitionTestTopic");
 
         // when
-        catchException(management.topic()).preview("kafkaPreviewTestGroup.partitionTestTopic", PRIMARY_KAFKA_CLUSTER_NAME, 10, 0L);
+        catchException(management.topic()).preview("notFoundErrorForNonExistingPartition.partitionTestTopic", PRIMARY_KAFKA_CLUSTER_NAME, 10, 0L);
 
         // then
         assertThat(CatchException.<NotFoundException>caughtException()).isInstanceOf(NotFoundException.class);

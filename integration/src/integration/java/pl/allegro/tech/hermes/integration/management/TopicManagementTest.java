@@ -35,9 +35,8 @@ public class TopicManagementTest extends IntegrationTest {
     public void shouldListTopics() {
         // given
         operations.createGroup("listTopicsGroup");
-        Response r = operations.createTopic("listTopicsGroup", "topic1");
+        operations.createTopic("listTopicsGroup", "topic1");
         operations.createTopic("listTopicsGroup", "topic2");
-        assertThat(r).hasStatus(Response.Status.CREATED);
         wait.untilTopicIsCreated("listTopicsGroup", "topic1");
         wait.untilTopicIsCreated("listTopicsGroup", "topic2");
 
@@ -51,6 +50,7 @@ public class TopicManagementTest extends IntegrationTest {
         // given
         operations.createGroup("removeTopicGroup");
         operations.createTopic("removeTopicGroup", "topic");
+        wait.untilTopicIsCreated("removeTopicGroup", "topic");
 
         // when
         Response response = management.topic().remove("removeTopicGroup.topic");
@@ -67,6 +67,8 @@ public class TopicManagementTest extends IntegrationTest {
         operations.createTopic("removeNonemptyTopicGroup", "topic");
         operations.createSubscription("removeNonemptyTopicGroup", "topic",
                 subscription().withName("subscription").withEndpoint(EndpointAddress.of("http://whatever.com")).applyDefaults().build());
+
+        wait.untilSubscriptionIsCreated("removeNonemptyTopicGroup", "topic", "subscription");
 
         // when
         Response response = management.topic().remove("removeNonemptyTopicGroup.topic");
@@ -98,6 +100,7 @@ public class TopicManagementTest extends IntegrationTest {
         // given
         operations.createGroup("overrideTopicGroup");
         operations.createTopic(topic().withName("overrideTopicGroup", "topic").build());
+        wait.untilTopicIsCreated("overrideTopicGroup", "topic");
 
         // when
         Response response = management.topic().create(topic().withName("overrideTopicGroup", "topic").build());
@@ -111,6 +114,9 @@ public class TopicManagementTest extends IntegrationTest {
         // given
         operations.buildTopic(topic().withName("trackedGroup", "topic").withTrackingEnabled(true).build());
         operations.buildTopic(topic().withName("untrackedGroup", "topic").withTrackingEnabled(false).build());
+        wait.untilTopicIsCreated("trackedGroup", "topic");
+        wait.untilTopicIsCreated("untrackedGroup", "topic");
+
 
         // when
         List<String> tracked = management.topic().list("", true);
@@ -124,6 +130,8 @@ public class TopicManagementTest extends IntegrationTest {
         // given
         operations.buildTopic(topic().withName("mixedTrackedGroup", "trackedTopic").withTrackingEnabled(true).build());
         operations.buildTopic(topic().withName("mixedTrackedGroup", "untrackedTopic").withTrackingEnabled(false).build());
+        wait.untilTopicIsCreated("mixedTrackedGroup", "trackedTopic");
+        wait.untilTopicIsCreated("mixedTrackedGroup", "untrackedTopic");
 
         // when
         List<String> tracked = management.topic().list("mixedTrackedGroup", true);
