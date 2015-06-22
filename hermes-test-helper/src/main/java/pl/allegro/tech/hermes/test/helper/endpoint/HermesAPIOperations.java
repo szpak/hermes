@@ -1,5 +1,6 @@
 package pl.allegro.tech.hermes.test.helper.endpoint;
 
+import com.jayway.awaitility.Duration;
 import pl.allegro.tech.hermes.api.Group;
 import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.Topic;
@@ -9,7 +10,7 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.jayway.awaitility.Awaitility.await;
 import static pl.allegro.tech.hermes.api.EndpointAddress.of;
 import static pl.allegro.tech.hermes.api.Subscription.Builder.subscription;
 import static pl.allegro.tech.hermes.api.SubscriptionPolicy.Builder.subscriptionPolicy;
@@ -25,8 +26,10 @@ public class HermesAPIOperations {
 
     public void createGroup(String group) {
         if (!endpoints.group().list().contains(group)) {
-            Response response = endpoints.group().create(Group.from(group));
-            assertThat(response.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+            await().atMost(Duration.TEN_SECONDS).until(() -> {
+                Response response = endpoints.group().create(Group.from(group));
+                return response.getStatus() == Response.Status.CREATED.getStatusCode();
+            });
         }
     }
 
@@ -40,13 +43,15 @@ public class HermesAPIOperations {
         topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), true));
 
         if (!topicList.contains(topic.getQualifiedName())) {
-            Response response = endpoints.topic().create(topic);
+            await().atMost(Duration.TEN_SECONDS).until(() -> {
+                Response response = endpoints.topic().create(topic);
 
-            assertThat(response.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+                return response.getStatus() == Response.Status.CREATED.getStatusCode();
+            });
         }
     }
 
-    public Response createSubscription(String group, String topic, String subscriptionName, String endpoint) {
+    public void createSubscription(String group, String topic, String subscriptionName, String endpoint) {
         Subscription subscription = subscription()
                 .applyDefaults()
                 .withName(subscriptionName)
@@ -54,13 +59,14 @@ public class HermesAPIOperations {
                 .withSubscriptionPolicy(subscriptionPolicy().applyDefaults().build())
                 .build();
 
-        return createSubscription(group, topic, subscription);
+        createSubscription(group, topic, subscription);
     }
 
-    public Response createSubscription(String group, String topic, Subscription subscription) {
-        Response respone = endpoints.subscription().create(group + "." + topic, subscription);
-        assertThat(respone.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
-        return respone;
+    public void createSubscription(String group, String topic, Subscription subscription) {
+        await().atMost(Duration.TEN_SECONDS).until(() -> {
+            Response respone = endpoints.subscription().create(group + "." + topic, subscription);
+            return respone.getStatus() == Response.Status.CREATED.getStatusCode();
+        });
     }
 
     public void buildTopic(String group, String topic) {
