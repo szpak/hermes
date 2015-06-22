@@ -98,7 +98,8 @@ public class PublishingTest extends IntegrationTest {
         remoteService.waitUntilReceived();
     }
 
-    @Test
+    @Unreliable
+    @Test(enabled = false)
     public void shouldNotConsumeMessagesWhenSubscriptionIsSuspended() throws InterruptedException {
         // given
         String group = "publishSuspendedGroup";

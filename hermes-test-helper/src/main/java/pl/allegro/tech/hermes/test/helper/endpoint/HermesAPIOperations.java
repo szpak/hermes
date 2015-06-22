@@ -109,8 +109,13 @@ public class HermesAPIOperations {
         return endpoints.subscription().updateState(group + "." + topic, subscription, Subscription.State.ACTIVE);
     }
 
-    public Response updateSubscription(String group, String topic, String subscription, Subscription updated) {
-        return endpoints.subscription().update(group + "." + topic, subscription, updated);
+    public void updateSubscription(String group, String topic, String subscription, Subscription updated) {
+        String qualifiedTopicName = group + "." + topic;
+        endpoints.subscription().update(qualifiedTopicName, subscription, updated);
+
+        waitAtMost(Duration.ONE_MINUTE).until(() -> {
+            return endpoints.subscription().get(qualifiedTopicName, subscription).equals(updated);
+        });
     }
 
     public Topic getTopic(String group, String topic) {
@@ -119,6 +124,10 @@ public class HermesAPIOperations {
 
     public void updateTopic(TopicName topicName, Topic updated) {
         endpoints.topic().update(topicName.qualifiedName(), updated);
+
+        waitAtMost(Duration.ONE_MINUTE).until(() -> {
+            return endpoints.topic().get(topicName.qualifiedName()).equals(updated);
+        });
     }
 
     private List<String> getAllTopics(Topic topic) {

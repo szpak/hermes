@@ -8,7 +8,6 @@ import pl.allegro.tech.hermes.api.PublishedMessageTraceStatus;
 import pl.allegro.tech.hermes.api.SentMessageTraceStatus;
 import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.TopicName;
-import pl.allegro.tech.hermes.common.admin.zookeeper.ZookeeperAdminTool;
 import pl.allegro.tech.hermes.common.config.Configs;
 import pl.allegro.tech.hermes.infrastructure.zookeeper.ZookeeperPaths;
 import pl.allegro.tech.hermes.test.helper.endpoint.HermesEndpoints;
@@ -41,10 +40,6 @@ public class Waiter {
 
     public void untilZookeeperNodeCreation(final String path) {
         untilZookeeperNodeCreation(path, zookeeper);
-    }
-
-    public void untilKafkaZookeeperNodeCreation(final String path) {
-        untilZookeeperNodeCreation(path, kafkaZookeeper);
     }
 
     public void untilKafkaZookeeperNodeEmptied(final String path, int seconds) {
@@ -100,10 +95,6 @@ public class Waiter {
         });
     }
 
-    public void untilNoAdminNodes() {
-        await().atMost(adjust(20), TimeUnit.SECONDS).until(() -> zookeeper.getChildren().forPath(ZookeeperAdminTool.ROOT).size() == 0);
-    }
-
     public void untilConsumersStop() {
         sleep(3);
     }
@@ -138,10 +129,6 @@ public class Waiter {
 
     public void untilReceivedAnyMessage(final DBCollection collection) {
         await().atMost(adjust(new Duration(30, TimeUnit.SECONDS))).until(() -> collection.find().count() > 0);
-    }
-
-    public void untilSubscriptionUpdated() {
-        sleep(2);
     }
 
     private String subscriptionConsumerPath(String group, String topic, String subscription) {
