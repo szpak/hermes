@@ -4,8 +4,6 @@ import com.jayway.awaitility.Duration;
 import com.mongodb.DB;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-import org.eclipse.jetty.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.allegro.tech.hermes.common.config.ConfigFactory;
@@ -57,18 +55,14 @@ public class FrontendStarter implements Starter<HermesFrontend> {
     }
 
     private void waitForStartup() throws Exception {
-        final HttpClient httpClient = HttpClientFactory.create();
+        OkHttpClient client = new OkHttpClient();
 
         await().atMost(Duration.TEN_SECONDS).until(() -> {
             Request request14192 = new Request.Builder()
                     .url(frontendUrl)
                     .build();
 
-            OkHttpClient client = new OkHttpClient();
-
-            Response resp = client.newCall(request14192).execute();
-
-            return resp.code() == 200;
+            return client.newCall(request14192).execute().code() == 200;
         });
     }
 }
