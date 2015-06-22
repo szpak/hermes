@@ -5,7 +5,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import pl.allegro.tech.hermes.api.EndpointAddress;
 import pl.allegro.tech.hermes.api.Subscription;
-import pl.allegro.tech.hermes.api.SubscriptionName;
 import pl.allegro.tech.hermes.api.TopicName;
 import pl.allegro.tech.hermes.client.HermesClient;
 import pl.allegro.tech.hermes.client.jersey.JerseyHermesSender;
@@ -79,9 +78,7 @@ public class SubscriptionManagementTest extends IntegrationTest {
 
         // then
         assertThat(response).hasStatus(Response.Status.OK);
-        Assertions.assertThat(
-                management.subscription().get("suspendSubscriptionGroup.topic", "subscription").getState()
-        ).isEqualTo(Subscription.State.SUSPENDED);
+        wait.untilSubscriptionIsSuspended(management, "suspendSubscriptionGroup.topic", "subscription");
     }
 
     @Test

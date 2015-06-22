@@ -4,12 +4,12 @@ import com.jayway.awaitility.Duration;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import org.apache.curator.framework.CuratorFramework;
+import pl.allegro.tech.hermes.api.PublishedMessageTraceStatus;
+import pl.allegro.tech.hermes.api.SentMessageTraceStatus;
 import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.TopicName;
 import pl.allegro.tech.hermes.common.admin.zookeeper.ZookeeperAdminTool;
 import pl.allegro.tech.hermes.common.config.Configs;
-import pl.allegro.tech.hermes.api.SentMessageTraceStatus;
-import pl.allegro.tech.hermes.api.PublishedMessageTraceStatus;
 import pl.allegro.tech.hermes.infrastructure.zookeeper.ZookeeperPaths;
 import pl.allegro.tech.hermes.test.helper.endpoint.HermesEndpoints;
 
@@ -199,5 +199,10 @@ public class Waiter {
 
     public void untilTopicUpdated() {
         sleep(2);
+    }
+
+    public void untilSubscriptionIsSuspended(HermesEndpoints management, String qualifiedTopicName, String subscription) {
+        await().atMost(adjust(Duration.ONE_MINUTE)).until(() ->
+                management.subscription().get(qualifiedTopicName, subscription).getState().equals(Subscription.State.SUSPENDED));
     }
 }

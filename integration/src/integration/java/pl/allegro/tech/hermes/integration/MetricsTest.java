@@ -158,7 +158,8 @@ public class MetricsTest extends IntegrationTest {
         assertThat(management.topic().list(newTopic.getGroupName(), false)).doesNotContain(newTopic.qualifiedName());
     }
 
-    @Test
+    @Unreliable
+    @Test(enabled = false)
     public void shouldNotReportMetricsToConfigStorageForRemovedSubscription() {
         //given
         TopicName topicName = TopicName.fromQualifiedName("metricsAfterSubscriptionRemovedGroup.topic");
