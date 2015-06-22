@@ -18,17 +18,17 @@ public class GroupManagementTest extends IntegrationTest {
     @Test
     public void shouldCreateGroup() {
         // given when
-        Response response = management.group().create(Group.from("testGroup"));
+        Response response = management.group().create(Group.from("groupManagementTestGroup"));
 
         // then
         assertThat(response).hasStatus(Response.Status.CREATED);
-        Assertions.assertThat(management.group().list()).contains("testGroup");
+        Assertions.assertThat(management.group().list()).contains("groupManagementTestGroup");
     }
 
     @Test
     public void shouldUpdateGroup() {
         // given
-        final String groupName = "groupToUpdate";
+        final String groupName = "groupManagementTestGroupToUpdate";
         final String supportTeam = "Skylab";
         operations.createGroup(groupName);
         Group modifiedGroup = group().withGroupName(groupName).withSupportTeam(supportTeam).build();
@@ -43,17 +43,18 @@ public class GroupManagementTest extends IntegrationTest {
     @Test
     public void shouldListGroups() {
         // given
-        operations.createGroup("listGroupsGroup1");
-        operations.createGroup("listGroupsGroup2");
+        operations.createGroup("groupManagementTestListGroupsGroup1");
+        operations.createGroup("groupManagementTestListGroupsGroup2");
 
         // when then
-        Assertions.assertThat(management.group().list()).containsOnlyOnce("listGroupsGroup1", "listGroupsGroup2");
+        Assertions.assertThat(management.group().list()).containsOnlyOnce("groupManagementTestListGroupsGroup1",
+                                                                          "groupManagementTestListGroupsGroup2");
     }
 
     @Test
     void shouldCreateAndFetchGroupDetails() throws InterruptedException {
         //given
-        Group group = new Group("groupWithDetails", "owner", "team", "contact");
+        Group group = new Group("groupManagementTestGroupWithDetails", "owner", "team", "contact");
         management.group().create(group);
 
         //when
@@ -78,24 +79,24 @@ public class GroupManagementTest extends IntegrationTest {
     @Test
     public void shouldRemoveGroup() {
         // given
-        operations.createGroup("removeGroup");
+        operations.createGroup("groupManagementTestRemoveGroup");
 
         // when
-        Response response = management.group().delete("removeGroup");
+        Response response = management.group().delete("groupManagementTestRemoveGroup");
 
         // then
         assertThat(response).hasStatus(Response.Status.OK);
-        assertThat(management.group().list()).doesNotContain("removeGroup");
+        assertThat(management.group().list()).doesNotContain("groupManagementTestRemoveGroup");
     }
 
     @Test
     public void shouldNotAllowOnRemovingNonEmptyGroup() {
         // given
-        operations.createGroup("removeNonemptyGroup");
-        operations.createTopic(topic().withName("removeNonemptyGroup", "topic").build());
+        operations.createGroup("groupManagementTestRemoveNonemptyGroup");
+        operations.createTopic(topic().withName("groupManagementTestRemoveNonemptyGroup", "topic").build());
 
         // when
-        Response response = management.group().delete("removeNonemptyGroup");
+        Response response = management.group().delete("groupManagementTestRemoveNonemptyGroup");
 
         // then
         assertThat(response).hasStatus(Response.Status.FORBIDDEN).hasErrorCode(ErrorCode.GROUP_NOT_EMPTY);
