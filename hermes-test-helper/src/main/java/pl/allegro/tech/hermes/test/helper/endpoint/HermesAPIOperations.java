@@ -27,10 +27,7 @@ public class HermesAPIOperations {
 
     public void createGroup(String group) {
         if (!endpoints.group().list().contains(group)) {
-//            waitAtMost(Duration.ONE_MINUTE).until(() -> {
-                Response response = endpoints.group().create(Group.from(group));
-//                return response.getStatus() == Response.Status.CREATED.getStatusCode();
-//            });
+            endpoints.group().create(Group.from(group));
 
             await().atMost(Duration.ONE_MINUTE).until(() -> {
                 return endpoints.group().list().contains(group);
@@ -46,11 +43,7 @@ public class HermesAPIOperations {
         List<String> topicList = getAllTopics(topic);
 
         if (!topicList.contains(topic.getQualifiedName())) {
-//            waitAtMost(Duration.ONE_MINUTE).until(() -> {
-                Response response = endpoints.topic().create(topic);
-
-//                return response.getStatus() == Response.Status.CREATED.getStatusCode();
-//            });
+            endpoints.topic().create(topic);
 
             waitAtMost(Duration.ONE_MINUTE).until(() -> {
                 return getAllTopics(topic).contains(topic.getQualifiedName());
@@ -70,10 +63,7 @@ public class HermesAPIOperations {
     }
 
     public void createSubscription(String group, String topic, Subscription subscription) {
-//        waitAtMost(Duration.ONE_MINUTE).until(() -> {
-            Response response = endpoints.subscription().create(group + "." + topic, subscription);
-//            return response.getStatus() == Response.Status.CREATED.getStatusCode();
-//        });
+        endpoints.subscription().create(group + "." + topic, subscription);
 
         waitAtMost(Duration.ONE_MINUTE).until(() -> {
             return getAllSubscriptions(group, topic).contains(subscription.getName());
@@ -125,10 +115,6 @@ public class HermesAPIOperations {
 
     public Topic getTopic(String group, String topic) {
         return endpoints.topic().get(group + "." + topic);
-    }
-
-    public Subscription getSubscription(String group, String topic, String subscription) {
-        return endpoints.subscription().get(group + "." + topic, subscription);
     }
 
     public void updateTopic(TopicName topicName, Topic updated) {

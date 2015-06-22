@@ -18,53 +18,53 @@ public class TopicManagementTest extends IntegrationTest {
     @Test
     public void shouldCreateTopic() {
         // given
-        operations.createGroup("createTopicGroup");
+        operations.createGroup("topicManagementTestCreateTopicGroup");
 
         // when
         Response response = management.topic().create(
-                topic().withName("createTopicGroup", "topic").applyDefaults().build());
+                topic().withName("topicManagementTestCreateTopicGroup", "topic").applyDefaults().build());
 
         // then
         assertThat(response).hasStatus(Response.Status.CREATED);
-        Assertions.assertThat(management.topic().get("createTopicGroup.topic")).isNotNull();
+        Assertions.assertThat(management.topic().get("topicManagementTestCreateTopicGroup.topic")).isNotNull();
     }
 
     @Test
     public void shouldListTopics() {
         // given
-        operations.createGroup("listTopicsGroup");
-        operations.createTopic("listTopicsGroup", "topic1");
-        operations.createTopic("listTopicsGroup", "topic2");
+        operations.createGroup("topicManagementTestListTopicsGroup");
+        operations.createTopic("topicManagementTestListTopicsGroup", "topic1");
+        operations.createTopic("topicManagementTestListTopicsGroup", "topic2");
 
         // when then
-        Assertions.assertThat(management.topic().list("listTopicsGroup", false)).containsOnlyOnce(
-                "listTopicsGroup.topic1", "listTopicsGroup.topic2");
+        Assertions.assertThat(management.topic().list("topicManagementTestListTopicsGroup", false)).containsOnlyOnce(
+                "topicManagementTestListTopicsGroup.topic1", "topicManagementTestListTopicsGroup.topic2");
     }
 
     @Test
     public void shouldRemoveTopic() {
         // given
-        operations.createGroup("removeTopicGroup");
-        operations.createTopic("removeTopicGroup", "topic");
+        operations.createGroup("topicManagementTestRemoveTopicGroup");
+        operations.createTopic("topicManagementTestRemoveTopicGroup", "topic");
 
         // when
-        Response response = management.topic().remove("removeTopicGroup.topic");
+        Response response = management.topic().remove("topicManagementTestRemoveTopicGroup.topic");
 
         // then
         assertThat(response).hasStatus(Response.Status.OK);
-        Assertions.assertThat(management.topic().list("removeTopicGroup", false)).isEmpty();
+        Assertions.assertThat(management.topic().list("topicManagementTestRemoveTopicGroup", false)).isEmpty();
     }
 
     @Test
     public void shouldNotAllowOnDeletingTopicWithSubscriptions() {
         // given
-        operations.createGroup("removeNonemptyTopicGroup");
-        operations.createTopic("removeNonemptyTopicGroup", "topic");
-        operations.createSubscription("removeNonemptyTopicGroup", "topic",
+        operations.createGroup("topicManagementTestRemoveNonemptyTopicGroup");
+        operations.createTopic("topicManagementTestRemoveNonemptyTopicGroup", "topic");
+        operations.createSubscription("topicManagementTestRemoveNonemptyTopicGroup", "topic",
                 subscription().withName("subscription").withEndpoint(EndpointAddress.of("http://whatever.com")).applyDefaults().build());
 
         // when
-        Response response = management.topic().remove("removeNonemptyTopicGroup.topic");
+        Response response = management.topic().remove("topicManagementTestRemoveNonemptyTopicGroup.topic");
 
         // then
         assertThat(response).hasStatus(Response.Status.FORBIDDEN).hasErrorCode(ErrorCode.TOPIC_NOT_EMPTY);
@@ -73,26 +73,26 @@ public class TopicManagementTest extends IntegrationTest {
     @Test
     public void shouldRecreateTopicAfterDeletion() {
         // given
-        operations.createGroup("recreateTopicGroup");
-        operations.createTopic("recreateTopicGroup", "topic");
-        management.topic().remove("recreateTopicGroup.topic");
+        operations.createGroup("topicManagementTestRecreateTopicGroup");
+        operations.createTopic("topicManagementTestRecreateTopicGroup", "topic");
+        management.topic().remove("topicManagementTestRecreateTopicGroup.topic");
 
-        wait.untilKafkaZookeeperNodeDeletion("/brokers/topics/recreateTopicGroup.topic");
+        wait.untilKafkaZookeeperNodeDeletion("/brokers/topics/topicManagementTestRecreateTopicGroup.topic");
 
         // when
         Response response = management.topic().create(
-                topic().withName("recreateTopicGroup", "topic").applyDefaults().build());
+                topic().withName("topicManagementTestRecreateTopicGroup", "topic").applyDefaults().build());
 
         // then
         assertThat(response).hasStatus(Response.Status.CREATED);
-        Assertions.assertThat(management.topic().get("recreateTopicGroup.topic")).isNotNull();
+        Assertions.assertThat(management.topic().get("topicManagementTestRecreateTopicGroup.topic")).isNotNull();
     }
 
     @Test
     public void shouldNotAllowOnCreatingSameTopicTwice() {
         // given
-        operations.createGroup("overrideTopicGroup");
-        operations.createTopic(topic().withName("overrideTopicGroup", "topic").build());
+        operations.createGroup("topicManagementTestOverrideTopicGroup");
+        operations.createTopic(topic().withName("topicManagementTestOverrideTopicGroup", "topic").build());
 
         // when
         Response response = management.topic().create(topic().withName("overrideTopicGroup", "topic").build());
@@ -104,28 +104,28 @@ public class TopicManagementTest extends IntegrationTest {
     @Test
     public void shouldReturnTopicsThatAreCurrentlyTracked() {
         // given
-        operations.buildTopic(topic().withName("trackedGroup", "topic").withTrackingEnabled(true).build());
-        operations.buildTopic(topic().withName("untrackedGroup", "topic").withTrackingEnabled(false).build());
+        operations.buildTopic(topic().withName("topicManagementTestTrackedGroup", "topic").withTrackingEnabled(true).build());
+        operations.buildTopic(topic().withName("topicManagementTestUntrackedGroup", "topic").withTrackingEnabled(false).build());
 
 
         // when
         List<String> tracked = management.topic().list("", true);
 
         // then
-        assertThat(tracked).contains("trackedGroup.topic").doesNotContain("untrackedGroup.topic");
+        assertThat(tracked).contains("topicManagementTestTrackedGroup.topic").doesNotContain("topicManagementTestUntrackedGroup.topic");
     }
 
     @Test
     public void shouldReturnTopicsThatAreCurrentlyTrackedForGivenGroup() {
         // given
-        operations.buildTopic(topic().withName("mixedTrackedGroup", "trackedTopic").withTrackingEnabled(true).build());
-        operations.buildTopic(topic().withName("mixedTrackedGroup", "untrackedTopic").withTrackingEnabled(false).build());
+        operations.buildTopic(topic().withName("topicManagementTestMixedTrackedGroup", "trackedTopic").withTrackingEnabled(true).build());
+        operations.buildTopic(topic().withName("topicManagementTestMixedTrackedGroup", "untrackedTopic").withTrackingEnabled(false).build());
 
         // when
-        List<String> tracked = management.topic().list("mixedTrackedGroup", true);
+        List<String> tracked = management.topic().list("topicManagementTestMixedTrackedGroup", true);
 
         // then
-        assertThat(tracked).contains("mixedTrackedGroup.trackedTopic")
-                           .doesNotContain("mixedTrackedGroup.untrackedTopic");
+        assertThat(tracked).contains("topicManagementTestMixedTrackedGroup.trackedTopic")
+                           .doesNotContain("topicManagementTestMixedTrackedGroup.untrackedTopic");
     }
 }
