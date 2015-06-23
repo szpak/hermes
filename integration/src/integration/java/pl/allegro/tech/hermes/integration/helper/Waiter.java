@@ -116,19 +116,19 @@ public class Waiter {
     }
 
     public void untilMessageTraceLogged(final DBCollection collection, final PublishedMessageTraceStatus status) {
-        await().atMost(adjust(new Duration(30, TimeUnit.SECONDS))).until(() -> collection.find(new BasicDBObject("status", status.toString())).count() > 0);
+        await().atMost(Duration.ONE_MINUTE).until(() -> collection.find(new BasicDBObject("status", status.toString())).count() > 0);
     }
 
     public void untilMessageTraceLogged(final DBCollection collection, final SentMessageTraceStatus status) {
-        await().atMost(adjust(new Duration(30, TimeUnit.SECONDS))).until(() -> collection.find(new BasicDBObject("status", status.toString())).count() > 0);
+        await().atMost(Duration.ONE_MINUTE).until(() -> collection.find(new BasicDBObject("status", status.toString())).count() > 0);
     }
 
     public void untilMessageIdLogged(final DBCollection collection, final String messageId) {
-        await().atMost(adjust(new Duration(30, TimeUnit.SECONDS))).until(() -> collection.find(new BasicDBObject("messageId", messageId)).count() > 0);
+        await().atMost(Duration.ONE_MINUTE).until(() -> collection.find(new BasicDBObject("messageId", messageId)).count() > 0);
     }
 
     public void untilReceivedAnyMessage(final DBCollection collection) {
-        await().atMost(adjust(new Duration(30, TimeUnit.SECONDS))).until(() -> collection.find().count() > 0);
+        await().atMost(Duration.ONE_MINUTE).until(() -> collection.find().count() > 0);
     }
 
     private String subscriptionConsumerPath(String group, String topic, String subscription) {
