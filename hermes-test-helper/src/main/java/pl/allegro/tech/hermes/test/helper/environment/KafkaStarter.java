@@ -1,12 +1,14 @@
 package pl.allegro.tech.hermes.test.helper.environment;
 
 import com.jayway.awaitility.Duration;
+import org.apache.commons.io.FileUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -25,6 +27,8 @@ public class KafkaStarter implements Starter<KafkaLocal> {
 
     @Override
     public void start() throws Exception {
+        FileUtils.deleteDirectory(new File(kafkaProperties.getProperty("log.dirs")));
+
         logger.info("Starting in-memory Kafka");
         kafkaLocal = new KafkaLocal(kafkaProperties);
         waitForStartup(Integer.valueOf(kafkaProperties.getProperty("broker.id")),

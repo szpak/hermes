@@ -157,7 +157,7 @@ public class MetricsTest extends IntegrationTest {
     @Test
     public void shouldNotReportMetricsToConfigStorageForRemovedSubscription() {
         //given
-        TopicName topicName = TopicName.fromQualifiedName("notReportMetricsToConfigStorageForRemovedSubscription.topic");
+        TopicName topicName = TopicName.fromQualifiedName("notReportMetricsToConfigStorageForRemoved.topic");
         String subscriptionName1 = "subscription";
         operations.buildSubscription(topicName.getGroupName(), topicName.getName(), subscriptionName1, HTTP_ENDPOINT_URL);
         remoteService.expectMessages(TestMessage.simple().body());

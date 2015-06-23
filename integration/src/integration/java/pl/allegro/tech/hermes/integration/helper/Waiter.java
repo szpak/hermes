@@ -162,15 +162,15 @@ public class Waiter {
     }
 
     private void untilZookeeperNodeCreation(final String path, final CuratorFramework zookeeper) {
-        await().atMost(adjust(Duration.ONE_MINUTE)).until(() -> zookeeper.checkExists().forPath(path) != null);
+        await().atMost(adjust(Duration.TEN_SECONDS)).until(() -> zookeeper.checkExists().forPath(path) != null);
     }
 
     private void untilZookeeperNodeDeletion(final String path, final CuratorFramework zookeeper) {
-        await().atMost(adjust(Duration.FIVE_SECONDS)).until(() -> zookeeper.checkExists().forPath(path) == null);
+        await().atMost(adjust(Duration.TEN_SECONDS)).until(() -> zookeeper.checkExists().forPath(path) == null);
     }
 
     public void untilSubscriptionIsSuspended(HermesEndpoints management, String qualifiedTopicName, String subscription) {
-        await().atMost(adjust(Duration.ONE_MINUTE)).until(() ->
+        await().atMost(adjust(Duration.TEN_SECONDS)).until(() ->
                 management.subscription().get(qualifiedTopicName, subscription).getState().equals(Subscription.State.SUSPENDED));
     }
 }
