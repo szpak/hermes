@@ -27,9 +27,13 @@ public class HermesAPIOperations {
 
     public void createGroup(String group) {
         if (!endpoints.group().list().contains(group)) {
-            endpoints.group().create(Group.from(group));
+            waitAtMost(Duration.TEN_SECONDS).until(() -> {
+                Response r = endpoints.group().create(Group.from(group));
+                System.out.printf("RESPONSE STATUS" + r.getStatus());
+                return r.getStatus() == 201;
+            });
 
-            await().atMost(Duration.ONE_MINUTE).until(() -> {
+            await().atMost(Duration.TEN_SECONDS).until(() -> {
                 return endpoints.group().list().contains(group);
             });
         }
@@ -43,9 +47,14 @@ public class HermesAPIOperations {
         List<String> topicList = getAllTopics(topic);
 
         if (!topicList.contains(topic.getQualifiedName())) {
-            endpoints.topic().create(topic);
+            waitAtMost(Duration.TEN_SECONDS).until(() -> {
+                Response r = endpoints.topic().create(topic);
+                System.out.printf("RESPONSE STATUS" + r.getStatus());
+                return r.getStatus() == Response.Status.CREATED.getStatusCode();
+            });
 
-            waitAtMost(Duration.ONE_MINUTE).until(() -> {
+            waitAtMost(Duration.TEN_SECONDS).until(() -> {
+                System.out.println(getAllTopics(topic));
                 return getAllTopics(topic).contains(topic.getQualifiedName());
             });
         }
@@ -63,9 +72,15 @@ public class HermesAPIOperations {
     }
 
     public void createSubscription(String group, String topic, Subscription subscription) {
-        endpoints.subscription().create(group + "." + topic, subscription);
+        waitAtMost(Duration.TEN_SECONDS).until(() -> {
+                    Response r = endpoints.subscription().create(group + "." + topic, subscription);
+                    System.out.printf("RESPONSE STATUS" + r.getStatus());
+                    return r.getStatus() == 201;
+                }
+        );
 
-        waitAtMost(Duration.ONE_MINUTE).until(() -> {
+
+        waitAtMost(Duration.TEN_SECONDS).until(() -> {
             return getAllSubscriptions(group, topic).contains(subscription.getName());
         });
     }
@@ -113,7 +128,7 @@ public class HermesAPIOperations {
         String qualifiedTopicName = group + "." + topic;
         endpoints.subscription().update(qualifiedTopicName, subscription, updated);
 
-        waitAtMost(Duration.ONE_MINUTE).until(() -> {
+        waitAtMost(Duration.TEN_SECONDS).until(() -> {
             return endpoints.subscription().get(qualifiedTopicName, subscription).equals(updated);
         });
     }
@@ -125,15 +140,19 @@ public class HermesAPIOperations {
     public void updateTopic(TopicName topicName, Topic updated) {
         endpoints.topic().update(topicName.qualifiedName(), updated);
 
-        waitAtMost(Duration.ONE_MINUTE).until(() -> {
+        waitAtMost(Duration.TEN_SECONDS).until(() -> {
             return endpoints.topic().get(topicName.qualifiedName()).equals(updated);
         });
     }
 
     private List<String> getAllTopics(Topic topic) {
         List<String> topicList = new ArrayList<>();
-        topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), false));
-        topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), true));
+        try {
+            topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), false));
+            topicList.addAll(endpoints.topic().list(topic.getName().getGroupName(), true));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         return topicList;
     }
 }

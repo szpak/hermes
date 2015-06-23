@@ -1,59 +1,61 @@
 package pl.allegro.tech.hermes.test.helper.environment;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.curator.test.TestingServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.jayway.awaitility.Duration;
+import org.apache.commons.io.FileUtils;
 
-public class ZookeeperStarter implements Starter<TestingServer> {
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Properties;
 
-    private static final Logger logger = LoggerFactory.getLogger(ZookeeperStarter.class);
+import static com.jayway.awaitility.Awaitility.await;
 
-    private TestingServer zookeeperServer;
+public class ZookeeperStarter implements Starter<ZooKeeperLocal> {
 
-    private final int port;
-    private final String connectString;
+    private final Properties zkProperties;
+    private ZooKeeperLocal zookeeper;
 
-    public ZookeeperStarter(int port, String connectString) {
-        this.port = port;
-        this.connectString = connectString;
+    public ZookeeperStarter() {
+        zkProperties = loadDefaultZkProperties();
+    }
+
+    private Properties loadDefaultZkProperties() {
+        Properties properties = new Properties();
+        try {
+            properties.load(this.getClass().getResourceAsStream("/zookeeper.properties"));
+        } catch (IOException e) {
+            throw new IllegalStateException("Error while loading kafka properties", e);
+        }
+        return properties;
     }
 
     @Override
     public void start() throws Exception {
-        logger.info("Running in-memory Zookeeper at port {}", port);
-        zookeeperServer = new TestingServer(port);
+        System.out.println("removing zk data");
+        FileUtils.deleteDirectory(new File(zkProperties.getProperty("dataDir")));
 
-        String[] zkConnectStringSplitted = connectString.split("/", 2);
+        //start local zookeeper
+        System.out.println("starting local zookeeper...");
+        zookeeper = new ZooKeeperLocal(zkProperties);
 
-        if (zkConnectStringSplitted.length > 1) {
-
-            CuratorFramework curator = startZookeeperClient(zkConnectStringSplitted[0]);
-            curator.create().forPath("/" + zkConnectStringSplitted[1]);
-            curator.close();
-        }
+        await().atMost(Duration.FIVE_SECONDS).until(() -> {
+            try {
+                Socket socket = new Socket("localhost", 2181);
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        });
     }
 
     @Override
     public void stop() throws Exception {
-        logger.info("Stopping in-memory Zookeeper");
-        zookeeperServer.close();
     }
 
     @Override
-    public TestingServer instance() {
-        return zookeeperServer;
+    public ZooKeeperLocal instance() {
+        return zookeeper;
     }
 
-    private CuratorFramework startZookeeperClient(String connectString) throws InterruptedException {
-        CuratorFramework zookeeperClient = CuratorFrameworkFactory.builder()
-            .connectString(connectString)
-            .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-            .build();
-        zookeeperClient.start();
-        zookeeperClient.blockUntilConnected();
-        return zookeeperClient;
-    }
+
 }

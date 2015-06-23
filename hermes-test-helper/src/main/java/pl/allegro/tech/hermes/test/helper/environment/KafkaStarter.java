@@ -1,72 +1,55 @@
 package pl.allegro.tech.hermes.test.helper.environment;
 
 import com.jayway.awaitility.Duration;
-import kafka.server.KafkaConfig;
-import kafka.server.KafkaServerStartable;
-import org.apache.commons.io.FileUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.Properties;
 
 import static com.jayway.awaitility.Awaitility.await;
 
-public class KafkaStarter implements Starter<KafkaServerStartable> {
+public class KafkaStarter implements Starter<KafkaLocal> {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaStarter.class);
+    private final Properties kafkaProperties;
 
-    private final KafkaConfig kafkaConfig;
-    private KafkaServerStartable kafka;
+    private KafkaLocal kafkaLocal;
 
-    public KafkaStarter() {
-        kafkaConfig = new KafkaConfig(loadDefaultProperties());
-        cleanLogs();
-    }
-
-    public KafkaStarter(Properties kafkaProperties) {
-        kafkaConfig = new KafkaConfig(kafkaProperties);
-        cleanLogs();
+    public KafkaStarter(String properties) {
+        kafkaProperties = loadDefaultProperties(properties);
     }
 
     @Override
     public void start() throws Exception {
         logger.info("Starting in-memory Kafka");
-
-        createZkBasePathIfNeeded(kafkaConfig.zkConnect());
-
-        kafka = new KafkaServerStartable(kafkaConfig);
-        kafka.startup();
-
-        waitForStartup(kafkaConfig.port());
+        kafkaLocal = new KafkaLocal(kafkaProperties);
+        waitForStartup(Integer.valueOf(kafkaProperties.getProperty("broker.id")),
+                kafkaProperties.getProperty("zookeeper.connect").split("/")[1]);
     }
 
-    private Properties loadDefaultProperties() {
+    private Properties loadDefaultProperties(String p) {
         Properties properties = new Properties();
         try {
             logger.info("Loading default kafka properties file");
-            properties.load(this.getClass().getResourceAsStream("/kafkalocal.properties"));
+            properties.load(this.getClass().getResourceAsStream(p));
         } catch (IOException e) {
             throw new IllegalStateException("Error while loading kafka properties", e);
         }
         return properties;
     }
 
-    private void waitForStartup(int port) {
-        final InetSocketAddress inetSocketAddress = new InetSocketAddress(port);
 
-        await().atMost(Duration.FIVE_SECONDS).until(() -> {
+
+    private void waitForStartup(int brokerId, String zookeeperConnect) throws InterruptedException {
+        final CuratorFramework client = startZookeeperClient("localhost:2181");
+        await().atMost(Duration.ONE_MINUTE).until(() -> {
             try {
-                Socket socket = new Socket();
-                socket.connect(inetSocketAddress, 10);
-                return socket.isConnected();
-            } catch (IOException e) {
+                return client.getChildren().forPath("/" + zookeeperConnect + "/brokers/ids").contains(Integer.toString(brokerId));
+            } catch (InterruptedException e) {
                 return false;
             }
         });
@@ -75,21 +58,12 @@ public class KafkaStarter implements Starter<KafkaServerStartable> {
     @Override
     public void stop() throws Exception {
         logger.info("Stopping in-memory Kafka");
-        kafka.shutdown();
+        kafkaLocal.stop();
     }
 
     @Override
-    public KafkaServerStartable instance() {
-        return kafka;
-    }
-
-    private void cleanLogs()  {
-        try {
-            FileUtils.deleteDirectory(new File(kafkaConfig.logDirs().head()));
-        } catch (IOException e) {
-            logger.info("Error while removing kafka logs", e);
-            throw new IllegalStateException(e);
-        }
+    public KafkaLocal instance() {
+        return kafkaLocal;
     }
 
     private CuratorFramework startZookeeperClient(String connectString) throws InterruptedException {
@@ -102,16 +76,5 @@ public class KafkaStarter implements Starter<KafkaServerStartable> {
         return zookeeperClient;
     }
 
-    private void createZkBasePathIfNeeded(String connectString) throws Exception {
-        String[] zkConnectStringSplitted = connectString.split("/", 2);
-
-        if (zkConnectStringSplitted.length > 1) {
-            CuratorFramework curator = startZookeeperClient(zkConnectStringSplitted[0]);
-            if (curator.checkExists().forPath("/" + zkConnectStringSplitted[1]) == null) {
-                curator.create().forPath("/" + zkConnectStringSplitted[1]);
-            }
-            curator.close();
-        }
-    }
 
 }

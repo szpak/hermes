@@ -8,11 +8,11 @@ kafka:
   clusters:
     -
       clusterName: primary
-      connectionString: localhost:14192/kafka
+      connectionString: localhost:2181/kafka
       connectionTimeout: 10000
     -
       clusterName: secondary
-      connectionString: localhost:14192/secondaryKafka
+      connectionString: localhost:2181/secondaryKafka
       connectionTimeout: 10000
 
 topic:
@@ -22,7 +22,7 @@ topic:
 
 storage:
   pathPrefix: /hermes
-  connectionString: localhost:14192
+  connectionString: localhost:2181
 
 auth:
   oauthServerUrl: http://localhost:19999
